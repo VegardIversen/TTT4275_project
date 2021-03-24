@@ -19,7 +19,13 @@ def load_data(path, d=','):
 #--------^Importing data^-----------#
 data = load_data(path)
 #---------Preprocessing-------------#
+<<<<<<< HEAD
 train, test = train_test_split(data, test_size = 0.4, stratify = data["species"], random_state = 42)# example for splitting dataset
 #--------^Preprocessing^------------#
 
+=======
+train, test = train_test_split(data, test_size = 20/50, stratify = data['species'], random_state = 42)# example for splitting dataset
+#--------^Preprocessing^------------#
+print(train)
+>>>>>>> e3f5095d4b0b993f9e2217ff0bf7833e6515af48
 print(test)
