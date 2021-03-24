@@ -10,7 +10,6 @@ path = './Iris_TTT4275/iris.csv'
 #-----------^Variables^-------------#
 
 #---------Importing data------------#
-
 def load_data(path, d=','):
     data = pd.read_csv(path, sep=',') #reading csv file, and splitting with ","
     data.columns = ['sepal_length','sepal_width','petal_length','petal_width','species']#making columnnames, for easier understanding
@@ -18,9 +17,10 @@ def load_data(path, d=','):
     return data
 
 #--------^Importing data^-----------#
-
+data = load_data(path)
 #---------Preprocessing-------------#
-train, test = train_test_split(data, test_size = 20/50, stratify = data['species'], random_state = 42)# example for splitting dataset
+#train, test = train_test_split(data, test_size = 0.4, stratify = data["species"], random_state = 42)# example for splitting dataset
 #--------^Preprocessing^------------#
-print(train)
-print(test)
+
+
+print(data.species)
