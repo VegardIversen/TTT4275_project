@@ -15,8 +15,8 @@ def load_data(path, d=','):
     #data.columns = ['sepal_length','sepal_width','petal_length','petal_width','species']#making columnnames, for easier understanding
     #data.describe()#this gives all the information you need: count, mean, std, min, 25%, 50%,75%,max
     return data
-
 #--------^Importing data^-----------#
+
 data = load_data(path)
 
 
