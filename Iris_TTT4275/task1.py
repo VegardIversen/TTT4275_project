@@ -30,7 +30,7 @@ def sigmoid(x):
 def accumulateMSE(gk, tk):
     return 0.5*np.matmul((gk-tk).T, (gk-tk))
 
-def get_gk(gk, W, xk):
+def get_gk(W, xk):
 ### Equation 20
     zk = np.matmul(W, xk)
     return sigmoid(zk)
@@ -64,7 +64,7 @@ def train(data, iterations, alpha, classes, features):
         for xk in data:
             #matmul = normal multiplication, #multiply = element-wise multiplication
             xk.reshape(features + 1, 1)
-            gk = findgk(W, xk)
+            gk = get_gk(W, xk)
 
             #Eq. 22
             grad_gk_MSE = get_grad_gk_MSE(gk, tk)
@@ -83,4 +83,3 @@ def train(data, iterations, alpha, classes, features):
     MSE_list.append(MSE)
 
 #-----------^Processing^------------#
-print(len(train()[0]))
