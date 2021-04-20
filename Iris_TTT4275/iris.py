@@ -92,8 +92,8 @@ def train_clas(data, iterations, alpha,t_k):
         for j, x in enumerate(data): #features in data
             
             if j%30==0 and j !=0 :
-                print(j)
-                print('ny klasse')
+                #print(j)
+                #print('ny klasse')
                 k += 1
 
             
@@ -105,15 +105,26 @@ def train_clas(data, iterations, alpha,t_k):
             #to do transformation use np.reshape
             #print(t_k.reshape(3,1))
             MSE += 0.5*np.matmul((g_k-t_k[k]).T,(g_k-t_k[k])) #eq: 3.19 compendium
-            print(g_k.dot(1-g_k))
-            grad_W_MSE += ((g_k-t_k[k]).dot(g_k.dot(1-g_k))) * x.T #eq:3.22,* works for elementiwise multiplication, np.multiply also works, but only for 2 arrays
+            #testing reshape before grad because of error
+            #g_k = g_k.reshape(3,)
+            
+
+            grad_gk_mse = np.multiply((g_k-t_k[k]),g_k)
+            grad_W_zk = x.reshape(1,features)
+            #print(x)
+            grad_W_MSE += np.matmul(np.multiply(grad_gk_mse,(1-g_k)),grad_W_zk)
+            #grad_W_MSE += ((g_k-t_k[k].reshape(3,)).dot(g_k.dot(1-g_k))) *x.T #eq:3.22,* works for elementiwise multiplication, np.multiply also works, but only for 2 arrays
             #grad_gk_mse= g_k-t_k, grad_zk_g = gk*(1-gk), grad_w_zk = xk.T
         
 
             
-        #mses[i] = MSE[0] #adding the Mse per iteration
-
+        mses[i] = MSE[0] #adding the Mse per iteration
+        #print(grad_W_MSE.shape)
+        #print(W.shape)
+    
         W = W-alpha*grad_W_MSE #eq:3.23
+        #print(W)
+    print(mses)
 
 #-----------^functions^-------------#
 
@@ -197,6 +208,7 @@ if __name__ == '__main__':
     #t_k = [[1,0,0]],[[0,1,0]],[[0,0,1]]
     #t_k = np.array([[[1,0,0]],[[0,1,0]],[[0,0,1]]])
     t_k = np.array([[[1],[0],[0]],[[0],[1],[0]],[[0],[0],[1]]])
+    #print(t_k[0].reshape(3,))
     test = setosa[30:].append((versicolor[30:], virginica[30:]))
     t_k_test = np.array([[[1],[0],[0]],[[0],[1],[0]],[[0],[0],[1]]])
 
@@ -206,7 +218,7 @@ if __name__ == '__main__':
     test = test.to_numpy()
 
     
-    train_clas(train, 1, 0.01,t_k)
+    train_clas(train, 10000, 0.0001,t_k)
     
 
 
