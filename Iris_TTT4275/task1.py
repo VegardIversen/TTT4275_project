@@ -27,24 +27,24 @@ data = load_data(path)
 def sigmoid(x):
     return 1/(1+np.exp(-x))
 
-def accumulateMSE(gk, tk)
+def accumulateMSE(gk, tk):
     return 0.5*np.matmul((gk-tk).T, (gk-tk))
 
-def get_gk(gk, W, xk)
+def get_gk(gk, W, xk):
 ### Equation 20
     zk = np.matmul(W, xk)
     return sigmoid(zk)
 
-def get_grad_gk_MSE(gk, tk)
+def get_grad_gk_MSE(gk, tk):
     return gk - tk
 
-def get_grad_zk_g(gk)
+def get_grad_zk_g(gk):
     return np.matmul(gk, (1-gk))
 
-def get_grad_W_zk(xk, features)
+def get_grad_W_zk(xk, features):
     return xk.reshape(1, features + 1)
 
-def accumulate_grad_W_MSE(x, y, z)
+def accumulate_grad_W_MSE(x, y, z):
     return np.matmul(np.multiply(x, y), z)
 
 def train(data, iterations, alpha, classes, features):
