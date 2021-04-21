@@ -15,7 +15,7 @@ class LCD:
         self.iterations = iterations
         self.alpha = alpha
         self.list_of_features = list_of_features
-        self.features = len(self.list_of_features)
+        self.features = len(self.list_of_features) +1
         self.classes = 3 #could have this as an input but didnt bother, shouldnt change
         self.weigths = np.zeros((self.classes,self.features))
         self.g_k = np.zeros(self.classes)
@@ -80,29 +80,55 @@ class LCD:
     def sigmoid2(self, x, w):
         return 1/(1+np.exp(-np.matmul(w,x)))
 
-    def grad_gk_mse(self, g_k, t_k):
+    def grad_gk_mse_f(self, g_k, t_k):
         grad = np.multiply((g_k-t_k),g_k)
         return grad
 
-    def grad_W_zk(self, x):
+    def grad_W_zk_f(self, x):
         grad = x.reshape(1,self.features)
         return grad
     
+    def grad_W_MSE_f(self, g_k, grad_gk_mse, grad_W_zk):
+        return np.matmul(np.multiply(grad_gk_mse,(1-g_k)),grad_W_zk)
 
-    def train_model(self): 
+    def MSE_f(self, g_k,t_k):
+        return 0.5*np.matmul((g_k-t_k).T,(g_k-t_k))
+
+
+
+    def train_model(self):
+        print(f'Number of iterations {self.iterations}') 
         self.g_k[0] = 1
-
+        
         for i in range(self.iterations):
             grad_W_MSE = 0
             MSE = 0
             k = 0
+            
             for j, x in enumerate(self.train): #isnt really necessary to use enumerate, see if i should change
                 if j%30==0 and j!=0:
                     k += 1
                 self.g_k = self.sigmoid(np.matmul(self.weigths,x.reshape(self.features,1)))
 
-                MSE += 0.5*np.matmul()
-                grad_gk_mse = self.grad_gk_mse(self.g_k,self.t_k[k])
+                MSE += self.MSE_f(self.g_k,self.t_k[k])
+
+                grad_gk_mse = self.grad_gk_mse_f(self.g_k,self.t_k[k])
+                grad_W_zk = self.grad_W_zk_f(x)
+                
+                grad_W_MSE += self.grad_W_MSE_f(self.g_k, grad_gk_mse, grad_W_zk)
+            
+            self.mses[i] = MSE[0]
+            self.weigths = self.weigths-self.alpha*grad_W_MSE
+
+            if(100*i /self.iterations) % 10 == 0: #printer bare til 90 bare 90%
+                
+                print(f"\rProgress passed {100 * i / self.iterations}%", end='\n')
+                
+        
+        print(f"\rProgress passed {(i+1)/self.iterations *100}%", end='\n')
+        print('Done')
+        return self.weigths
+
                 
 
     def fit(self,):
@@ -114,7 +140,56 @@ class LCD:
         pass
 
 
-# t = [1,1,1,1,1]
-# t1 = [1,1,1,1,1]
-# x = LCD(1,t1,2,1,[])
-# print(x.sigmoid())
+classes = 3
+iris_names = ['Iris-setosa', 'Iris-versicolor', 'Iris-virginica']
+features = ['sepal_length','sepal_width','petal_length','petal_width']
+path = 'iris.csv'
+path_setosa = 'class_1.csv'
+path_versicolour = 'class_2.csv'
+path_virginica = 'class_3.csv'
+
+def load_data(path, one=True, maxVal=None, normalize=False, d=','): #change normalize to true to normalize the feature data
+    data = pd.read_csv(path, sep=d) #reading csv file, and splitting with ","
+    #data.columns = ['sepal_length','sepal_width','petal_length','petal_width','species']#making columnnames, for easier understanding
+    #data.describe()#this gives all the information you need: count, mean, std, min, 25%, 50%,75%,max
+    if one: #dont wont a column of ones when plotting
+        lenght = len(data)
+        #adding ones
+        if lenght>60:
+
+            data.insert(4,'Ones',np.ones(lenght),True)
+        
+        else:
+            data['Ones'] = np.ones(lenght)
+    #normalize
+    if normalize:
+        data = data.divide(maxVal)
+
+    return data
+
+
+if __name__ == '__main__':
+
+    #----------------get data--------------------#
+    tot_data = load_data(path, normalize=False)
+
+    max_val = tot_data.max(numeric_only=True).max() #first max, gets max of every feature, second max gets max of the features
+    setosa = load_data(path_setosa,max_val) 
+    
+    versicolor = load_data(path_versicolour, max_val)
+    virginica = load_data(path_virginica, max_val)
+    split_data_array = [setosa,versicolor,virginica]
+
+    train = pd.concat([setosa[0:30],versicolor[0:30],virginica[0:30]])
+    test = pd.concat([setosa[30:],versicolor[30:],virginica[30:]])
+    t_k = np.array([[[1],[0],[0]],[[0],[1],[0]],[[0],[0],[1]]])
+    t_k_test = np.array([[[1],[0],[0]],[[0],[1],[0]],[[0],[0],[1]]])
+
+    #just making dataframe to numpy array
+    train = train.to_numpy()
+    test = test.to_numpy()
+
+    w1 = LCD(train,test,t_k,2000,0.01, features)
+    weigths1 = w1.train_model()
+    print('\n')
+    print(weigths1)
