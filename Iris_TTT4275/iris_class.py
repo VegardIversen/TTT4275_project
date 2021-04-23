@@ -75,7 +75,10 @@ class LCD:
     def get_num_of_classes(self):
         return self.classes
 
-    
+    def reset_confusion_matrix(self):
+        print('Resetting confusion matrix...')
+        self.confusion_matrix = np.zeros((self.classes,self.classes)) 
+
     def sigmoid(self, x):
 
         return np.array(1/(1+ np.exp(-x)))
@@ -100,7 +103,7 @@ class LCD:
 
 
     def train_model(self):
-        print(f'Number of iterations {self.iterations}') 
+        print(f'Training model with {self.iterations} iterations and alpha={self.alpha}.') 
         self.g_k[0] = 1
         
         for i in range(self.iterations):
@@ -132,21 +135,26 @@ class LCD:
         print('Done')
         return self.weigths
 
-    def test_model(self, test=None): #or call this def fit(), to be simular as other lib.
+    def test_model(self): #or call this def fit(), to be simular as other lib.
         
         if(np.all((self.weigths==0 ))):
             print('You need to train the model first')
             return False
-        if test is None:
-            test = self.test
-        else:
-            print(test)
-            print('Testing model with training set')
+        if(np.all((self.confusion_matrix != 0))):
+            print('You have to reset the confusion matrix first')
             print('Resetting confusion matrix')
+            self.reset_confusion_matrix()
 
-            self.confusion_matrix = np.zeros((self.classes,self.classes))
+        # if test is None: #used another fix for this
+        #     test = self.test
+        # else:
+        #     print(test)
+        #     print('Testing model with training set')
+        #     print('Resetting confusion matrix')
 
-        for clas, test_set in enumerate(test):
+            #self.confusion_matrix = np.zeros((self.classes,self.classes))
+        print(f'Testing model with {self.iterations} iterations and alpha={self.alpha}.')
+        for clas, test_set in enumerate(self.test):
             for row in test_set:
                 prediction = np.argmax(np.matmul(self.weigths,row))
                 self.confusion_matrix[clas,prediction] += 1
@@ -173,9 +181,11 @@ class LCD:
         sn.heatmap(df_cm, annot=True, cmap="YlGnBu")
         plt.title(f'Confusion matrix for Iris task\n iteration: {self.iterations}, alpha: {self.alpha}.\n error rate = {100 * error:.1f}%')
         if save:
-            plt.savefig(f'./figurer/confusionmatrixIris20_{name}_it{self.iterations}_alpha{self.alpha}.png',dpi=200)
+            plt.savefig(f'./figurer/confusionmatrixIris_{name}_it{self.iterations}_alpha{self.alpha}.png',dpi=200)
         else:
             plt.show()
+        plt.clf()
+        plt.close()
     
     def plot_MSE(self, save=False, log=False):
         plt.plot(self.mses)
@@ -203,9 +213,11 @@ def plot_mses_array(arr, alphas, name='ok', save=False):
     plt.ylabel('Mean square error')
     plt.legend(loc=1)
     if save:
-        plt.savefig(f'./figurer/MSE_all_last30_{name}.png', dpi=200)
+        plt.savefig(f'./figurer/MSE_all_{name}.png', dpi=200)
     else:
         plt.show()
+    plt.clf()
+    plt.close()
     
     
 
@@ -235,9 +247,18 @@ def load_data(path, one=True, maxVal=None, normalize=False, d=','): #change norm
 
     return data
 
+def remove_feature_dataset(data, features):
+    data = data.drop(columns=features)
+    print(data.head())
+    return data
+
+def filter_dataset(data,features):
+    data = data.filter(items=features)
+    return data
+
 classes = 3
 iris_names = ['Iris-setosa', 'Iris-versicolor', 'Iris-virginica']
-features = ['sepal_length','sepal_width','petal_length','petal_width']
+#features = ['sepal_length','sepal_width','petal_length','petal_width']
 path = 'iris.csv'
 path_setosa = 'class_1.csv'
 path_versicolour = 'class_2.csv'
@@ -252,9 +273,11 @@ virginica = load_data(path_virginica, max_val)
 #---------------^get data^-------------------#
 alphas = [1,0.1,0.01,0.001,0.0001,0.00001]
 #alphas = [0.01]
-def task1a():
+def task1a(s=False):
     train_size = 30
     arr= []
+    features = ['sepal_length','sepal_width','petal_length','petal_width']
+    
     
     #----------------prepros data--------------------#
     #split_data_array = [setosa,versicolor,virginica] #not necessary
@@ -269,37 +292,28 @@ def task1a():
     #---------------^prepros data^-------------------#
 
     for i in range(len(alphas)):
+        print(f'Making model with 2000 iteration and an alpha of {alphas[i]} ')
         model = f'w{i}'
         model = LCD(train,test,t_k,2000,alphas[i], features)
-        
         model.train_model()
         arr.append(model.mses)
         model.test_model()
         model.print_confusion_matrix()
-        model.plot_confusion_matrix(name='test', save=False)
-        model.test_model(train_for_test)
+        model.plot_confusion_matrix(name='test', save=s)
+        print('Testing the model with the training set')
+        model.reset_confusion_matrix()
+        model.set_test(train_for_test)
+        model.test_model()
         model.print_confusion_matrix()
-        model.plot_confusion_matrix(name='train', save=False)
+        model.plot_confusion_matrix(name='train_1a', save=s)
         
 
-    plot_mses_array(arr, alphas, name='test', save=False)
-    # print('Starting with train set')
-    # for i in range(len(alphas)):
-    #     model = f'wt{i}'
-    #     model = LCD(train,test,t_k,2000,alphas[i], features)
-        
-    #     model.train_model()
-    #     model.test_model(test=train_for_test)
-    #     model.print_confusion_matrix()
-    #     model.plot_confusion_matrix(name='train', save=False)
-        
-    
-    #plot_mses_array(arr_test, alphas, name='test', save=True)
-    #plot_mses_array(arr_train, alphas, name='train', save=True)
+    plot_mses_array(arr, alphas, name='test_1a', save=s)
 
-def task1d():
+def task1d(s=False):
     train_size = 30
     arr = []
+    features = ['sepal_length','sepal_width','petal_length','petal_width']
    
     #----------------prepros data--------------------#
     #split_data_array = [setosa,versicolor,virginica] #not necessary
@@ -314,31 +328,198 @@ def task1d():
     #---------------^prepros data^-------------------#
 
     for i in range(len(alphas)):
-        model = f'w{i}'
+        print(f'Making model with 2000 iteration and an alpha of {alphas[i]} ')
+        model = f'wl{i}'
         model = LCD(train,test,t_k,2000,alphas[i], features)
-        
         model.train_model()
+        arr.append(model.mses)
         model.test_model()
         model.print_confusion_matrix()
-        model.plot_confusion_matrix(name='test', save=True)
-        
-        arr.append(model.mses)
-    
-    plot_mses_array(arr, alphas, name='ok', save=False)
-
-    for i in range(len(alphas)):
-        model = f'wt{i}'
-        model = LCD(train,test,t_k,2000,alphas[i], features)
-        
-        model.train_model()
-        model.test_model(test=train_for_test)
+        model.plot_confusion_matrix(name='test', save=s)
+        print('Testing the model with the training set')
+        model.reset_confusion_matrix()
+        model.set_test(train_for_test)
+        model.test_model()
         model.print_confusion_matrix()
-        model.plot_confusion_matrix(name='train', save=True)
+        model.plot_confusion_matrix(name='train_1d', save=s)
+        
+
+    plot_mses_array(arr, alphas, name='test_1d', save=s)
 
     
+def task2a(s=False):
+    global setosa,versicolor,virginica
+    train_size = 30
+    arr = []
+    features = ['sepal_length','petal_length','petal_width']
+    #removing the sepal width feature because it shows most overlap
+    re_feature = ['sepal_width']
+    setosa = remove_feature_dataset(setosa,re_feature)
+    versicolor = remove_feature_dataset(versicolor,re_feature)
+    virginica = remove_feature_dataset(virginica,re_feature)
+
+    #----------------prepros data--------------------#
+    #split_data_array = [setosa,versicolor,virginica] #not necessary
+
+    #splitting up in test and train sets
+    train = pd.concat([setosa[0:train_size],versicolor[0:train_size],virginica[0:train_size]])
+    train_for_test = np.array([setosa[0:train_size],versicolor[0:train_size],virginica[0:train_size]])
+    test = np.array([setosa[train_size:],versicolor[train_size:],virginica[train_size:]]) #could mb have done this for train to, 
+    t_k = np.array([[[1],[0],[0]],[[0],[1],[0]],[[0],[0],[1]]]) #making array to check whats the true class is
+    #just making dataframe to numpy array
+    train = train.to_numpy()
+    #---------------^prepros data^-------------------#
+    for i in range(len(alphas)):
+        print(f'Making model with 2000 iteration and an alpha of {alphas[i]} ')
+        model = f'w2{i}'
+        model = LCD(train,test,t_k,2000,alphas[i], features)
+        model.train_model()
+        arr.append(model.mses)
+        model.test_model()
+        model.print_confusion_matrix()
+        model.plot_confusion_matrix(name='test_2a', save=s)
+        print('Testing the model with the training set')
+        model.reset_confusion_matrix()
+        model.set_test(train_for_test)
+        model.test_model()
+        model.print_confusion_matrix()
+        model.plot_confusion_matrix(name='train_2a', save=s)
+        
+
+    plot_mses_array(arr, alphas, name='test_2a', save=s)
 
 
+def task2b_1(s=False):
+    #also removing sepal length since it also showed alot of overlap
+    global setosa,versicolor,virginica
+    train_size = 30
+    arr = []
+    features = ['petal_length','petal_width']
+    #removing the sepal width feature because it shows most overlap
+    re_feature = ['sepal_length','sepal_width']
+    setosa = remove_feature_dataset(setosa,re_feature)
+    versicolor = remove_feature_dataset(versicolor,re_feature)
+    virginica = remove_feature_dataset(virginica,re_feature)
+
+    #----------------prepros data--------------------#
+    #split_data_array = [setosa,versicolor,virginica] #not necessary
+
+    #splitting up in test and train sets
+    train = pd.concat([setosa[0:train_size],versicolor[0:train_size],virginica[0:train_size]])
+    train_for_test = np.array([setosa[0:train_size],versicolor[0:train_size],virginica[0:train_size]])
+    test = np.array([setosa[train_size:],versicolor[train_size:],virginica[train_size:]]) #could mb have done this for train to, 
+    t_k = np.array([[[1],[0],[0]],[[0],[1],[0]],[[0],[0],[1]]]) #making array to check whats the true class is
+    #just making dataframe to numpy array
+    train = train.to_numpy()
+    #---------------^prepros data^-------------------#
+    for i in range(len(alphas)):
+        print(f'Making model with 2000 iteration and an alpha of {alphas[i]} ')
+        model = f'w2{i}'
+        model = LCD(train,test,t_k,2000,alphas[i], features)
+        model.train_model()
+        arr.append(model.mses)
+        model.test_model()
+        model.print_confusion_matrix()
+        model.plot_confusion_matrix(name='test_2b1', save=s)
+        print('Testing the model with the training set')
+        model.reset_confusion_matrix()
+        model.set_test(train_for_test)
+        model.test_model()
+        model.print_confusion_matrix()
+        model.plot_confusion_matrix(name='train_2b1', save=s)
+        
+
+    plot_mses_array(arr, alphas, name='test_2b1', save=s)
+
+def task2b_2(s=False):
+    #also removing petal width
+    global setosa,versicolor,virginica
+    train_size = 30
+    arr = []
+    features = ['petal_length']
+    #removing the sepal width feature because it shows most overlap
+    re_feature = ['sepal_length','sepal_width','petal_width']
+    setosa = remove_feature_dataset(setosa,re_feature)
+    versicolor = remove_feature_dataset(versicolor,re_feature)
+    virginica = remove_feature_dataset(virginica,re_feature)
+
+    #----------------prepros data--------------------#
+    #split_data_array = [setosa,versicolor,virginica] #not necessary
+
+    #splitting up in test and train sets
+    train = pd.concat([setosa[0:train_size],versicolor[0:train_size],virginica[0:train_size]])
+    train_for_test = np.array([setosa[0:train_size],versicolor[0:train_size],virginica[0:train_size]])
+    test = np.array([setosa[train_size:],versicolor[train_size:],virginica[train_size:]]) #could mb have done this for train to, 
+    t_k = np.array([[[1],[0],[0]],[[0],[1],[0]],[[0],[0],[1]]]) #making array to check whats the true class is
+    #just making dataframe to numpy array
+    train = train.to_numpy()
+    #---------------^prepros data^-------------------#
+    for i in range(len(alphas)):
+        print(f'Making model with 2000 iteration and an alpha of {alphas[i]} ')
+        model = f'w3{i}'
+        model = LCD(train,test,t_k,2000,alphas[i], features)
+        model.train_model()
+        arr.append(model.mses)
+        model.test_model()
+        model.print_confusion_matrix()
+        model.plot_confusion_matrix(name='test_2b2', save=s)
+        print('Testing the model with the training set')
+        model.reset_confusion_matrix()
+        model.set_test(train_for_test)
+        model.test_model()
+        model.print_confusion_matrix()
+        model.plot_confusion_matrix(name='train_2b2', save=s)
+        
+
+    plot_mses_array(arr, alphas, name='test_2b2', save=s)
+
+def task2b_2_1(s=False):
+    #Testing with removing petal length
+    global setosa,versicolor,virginica
+    train_size = 30
+    arr = []
+    features = ['petal_width']
+    #removing the sepal width feature because it shows most overlap
+    re_feature = ['sepal_length','sepal_width','petal_length']
+    setosa = remove_feature_dataset(setosa,re_feature)
+    versicolor = remove_feature_dataset(versicolor,re_feature)
+    virginica = remove_feature_dataset(virginica,re_feature)
+
+    #----------------prepros data--------------------#
+    #split_data_array = [setosa,versicolor,virginica] #not necessary
+
+    #splitting up in test and train sets
+    train = pd.concat([setosa[0:train_size],versicolor[0:train_size],virginica[0:train_size]])
+    train_for_test = np.array([setosa[0:train_size],versicolor[0:train_size],virginica[0:train_size]])
+    test = np.array([setosa[train_size:],versicolor[train_size:],virginica[train_size:]]) #could mb have done this for train to, 
+    t_k = np.array([[[1],[0],[0]],[[0],[1],[0]],[[0],[0],[1]]]) #making array to check whats the true class is
+    #just making dataframe to numpy array
+    train = train.to_numpy()
+    #---------------^prepros data^-------------------#
+    for i in range(len(alphas)):
+        print(f'Making model with 2000 iteration and an alpha of {alphas[i]} ')
+        model = f'w4{i}'
+        model = LCD(train,test,t_k,2000,alphas[i], features)
+        model.train_model()
+        arr.append(model.mses)
+        model.test_model()
+        model.print_confusion_matrix()
+        model.plot_confusion_matrix(name='test_2b2_1', save=s)
+        print('Testing the model with the training set')
+        model.reset_confusion_matrix()
+        model.set_test(train_for_test)
+        model.test_model()
+        model.print_confusion_matrix()
+        model.plot_confusion_matrix(name='train_2b2_1', save=s)
+        
+
+    plot_mses_array(arr, alphas, name='test_2b2_1', save=s)
 
 if __name__ == '__main__':
-    task1a()
+    #task1a()
     #task1d()
+    #task2a()
+    #task2b_1()
+    #task2b_2()
+    #task2b_2_1()
+    pass
