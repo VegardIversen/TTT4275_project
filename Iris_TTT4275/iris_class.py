@@ -3,11 +3,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sn
 
-#to make a LCD, we take in a training, test an r_k list, and number of iteraterions, alpha and list of features
-#make the class, d = LCD(train,test,t_l,iterations, alpha, list_of_features)
+#to make a LDC, we take in a training, test an r_k list, and number of iteraterions, alpha and list of features
+#make the class, d = LDC(train,test,t_l,iterations, alpha, list_of_features)
 #then use w = d.train()
 #could use @dataclass to not use self
-class LCD:
+class LDC:
     def __init__(self, train, test, t_k, iterations, alpha, list_of_features):
         #attributes under
         self.train = train
@@ -294,7 +294,7 @@ def task1a(s=False):
     for i in range(len(alphas)):
         print(f'Making model with 2000 iteration and an alpha of {alphas[i]} ')
         model = f'w{i}'
-        model = LCD(train,test,t_k,2000,alphas[i], features)
+        model = LDC(train,test,t_k,2000,alphas[i], features)
         model.train_model()
         arr.append(model.mses)
         model.test_model()
@@ -330,7 +330,7 @@ def task1d(s=False):
     for i in range(len(alphas)):
         print(f'Making model with 2000 iteration and an alpha of {alphas[i]} ')
         model = f'wl{i}'
-        model = LCD(train,test,t_k,2000,alphas[i], features)
+        model = LDC(train,test,t_k,2000,alphas[i], features)
         model.train_model()
         arr.append(model.mses)
         model.test_model()
@@ -372,7 +372,7 @@ def task2a(s=False):
     for i in range(len(alphas)):
         print(f'Making model with 2000 iteration and an alpha of {alphas[i]} ')
         model = f'w2{i}'
-        model = LCD(train,test,t_k,2000,alphas[i], features)
+        model = LDC(train,test,t_k,2000,alphas[i], features)
         model.train_model()
         arr.append(model.mses)
         model.test_model()
@@ -415,7 +415,7 @@ def task2b_1(s=False):
     for i in range(len(alphas)):
         print(f'Making model with 2000 iteration and an alpha of {alphas[i]} ')
         model = f'w2{i}'
-        model = LCD(train,test,t_k,2000,alphas[i], features)
+        model = LDC(train,test,t_k,2000,alphas[i], features)
         model.train_model()
         arr.append(model.mses)
         model.test_model()
@@ -457,7 +457,7 @@ def task2b_2(s=False):
     for i in range(len(alphas)):
         print(f'Making model with 2000 iteration and an alpha of {alphas[i]} ')
         model = f'w3{i}'
-        model = LCD(train,test,t_k,2000,alphas[i], features)
+        model = LDC(train,test,t_k,2000,alphas[i], features)
         model.train_model()
         arr.append(model.mses)
         model.test_model()
@@ -499,7 +499,7 @@ def task2b_2_1(s=False):
     for i in range(len(alphas)):
         print(f'Making model with 2000 iteration and an alpha of {alphas[i]} ')
         model = f'w4{i}'
-        model = LCD(train,test,t_k,2000,alphas[i], features)
+        model = LDC(train,test,t_k,2000,alphas[i], features)
         model.train_model()
         arr.append(model.mses)
         model.test_model()
