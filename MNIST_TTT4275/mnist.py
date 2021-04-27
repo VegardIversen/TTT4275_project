@@ -8,6 +8,9 @@ import random
 import operator
 from operator import itemgetter
 import seaborn
+import time
+
+start = time.time()
 
 #Loading the MNIST dataset from keras
 (train_X, train_y), (test_X, test_y) = mnist.load_data()
@@ -30,7 +33,9 @@ print('Y_test:  '  + str(test_y.shape))
 # t = getTrainingSubset(10)
 
 def eucDist(x1, x2):
-    return np.sqrt(np.sum((x2-x1)**2)) # **2 funker ikke...
+    dist = np.linalg.norm(x1 - x2)
+    return dist
+    # return np.sqrt(np.sum((x2-x1)**2)) # **2 funker ikke...
 
 # def KNN(test_X, train_X, train_y, k):
 #     dist = np.array([eucDist(test_X, x_t) for x_t in train_X])
@@ -91,29 +96,39 @@ class NN():
         return predictions
 
 # k = 3 #K nearest neighbours
-chunkSize = 20
+chunkSize = 60000
 model = NN()
 model.fit(train_X[:chunkSize], train_y[:chunkSize])
 print('train labels:', train_y[:15])
 # model.fit(train_X[:10], train_y[:10])
 # print(model.predict(test_X[:100]))
-predictions = model.predictNN(test_X[:5])
+predictions = model.predictNN(test_X[:100])
 print(predictions)
 
 def getConfusionMatrix(predictions):
     confusion_matrix = np.zeros((10,10))
     for i, x in enumerate(predictions):
             confusion_matrix[test_y[i], x] += 1
+    return confusion_matrix
+def getConfusionMatrixNormalized(predictions):
+    confusion_matrix = np.zeros((10,10))
+    for i, x in enumerate(predictions):
+            confusion_matrix[test_y[i], x] += 1
     return confusion_matrix/np.amax(confusion_matrix)
 
 def plot(confusion_matrix):
+    dia_sum = 0
+    for i in range(len(confusion_matrix)):
+        dia_sum += confusion_matrix[i, i]
+        error = 1 - dia_sum / np.sum(confusion_matrix)
     class_names = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
     df_cm = pd.DataFrame(confusion_matrix, index = [i for i in class_names], columns = [i for i in class_names])
     plt.figure(figsize = (10,7))
     seaborn.heatmap(df_cm, annot=True, cmap="YlGnBu")
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    plt.title('Confusion matrix')
+    plt.title(f'Confusion matrix - Chunksize: {chunkSize}\n error rate = {100 * error:.1f}%')
+    plt.savefig(f'./figures/Confusion_matrix_{chunkSize}chunk_normalized.png', dpi=200)
     plt.show()
 
 plot(getConfusionMatrix(predictions))
@@ -139,16 +154,22 @@ plot(getConfusionMatrix(predictions))
 #     plt.imshow(train_X[i], cmap=plt.get_cmap('gray'))
 # plt.show()
 
-for i in range(9):
-     plt.subplot(330 + 1 + i)
-     plt.imshow(test_X[i], cmap=plt.get_cmap('gray'))
-plt.show()
-for i in range(9):  
-     plt.subplot(330 + 1 + i)
-     plt.imshow(train_X[i], cmap=plt.get_cmap('gray'))
-plt.show()
-for i in range(9):  
-     plt.subplot(330 + 1 + i)
-     plt.imshow(train_X[i+9], cmap=plt.get_cmap('gray'))
-plt.show()
+# for i in range(9):
+#      plt.subplot(330 + 1 + i)
+#      plt.imshow(test_X[i], cmap=plt.get_cmap('gray'))
+# plt.show()
+# for i in range(9):  
+#      plt.subplot(330 + 1 + i)
+#      plt.imshow(train_X[i], cmap=plt.get_cmap('gray'))
+# plt.show()
+# for i in range(9):  
+#      plt.subplot(330 + 1 + i)
+#      plt.imshow(train_X[i+9], cmap=plt.get_cmap('gray'))
+# plt.show()
 #------------^PLOT^---------------
+
+# end time
+end = time.time()
+
+# total time taken
+print(f"Runtime of the program is {end - start} s.")
