@@ -9,6 +9,7 @@ import operator
 from operator import itemgetter
 import seaborn
 import time
+from scipy.spatial import distance
 
 start = time.time()
 
@@ -31,11 +32,16 @@ print('Y_test:  '  + str(test_y.shape))
 #     return np.split(train_X, chunkSize), np.split(train_y, chunkSize)
 
 # t = getTrainingSubset(10)
+def differenceImage(img1, img2):
+    a = img1-img2
+    b = np.uint8(img1<img2) * 254 + 1
+    return a * b
+
+def eucledianDistance(img1, img2):
+    return np.sum(differenceImage(img1, img2))
 
 def eucDist(x1, x2):
-    dist = np.linalg.norm(x1 - x2)
-    return dist
-    # return np.sqrt(np.sum((x2-x1)**2)) # **2 funker ikke...
+    return np.linalg.norm(x1 - x2)
 
 # def KNN(test_X, train_X, train_y, k):
 #     dist = np.array([eucDist(test_X, x_t) for x_t in train_X])
@@ -81,29 +87,37 @@ class NN():
         return predictions
     def predictNN(self, test_X):
         predictions = []
-        # print(test_X.shape[-1])
-        print(len(test_X))
+        fail_predictions = []
+        success_predictions = []
         for i in range(len(test_X)):
             #Iterate through every train_X and find the euclidian distance between test_X and train_X and put it in a np.array
             dist = []
             for j in range(len(self.train_X)):
-                dist.append(eucDist(test_X[i], self.train_X[j]))
-            print(dist)
+                dist.append(eucledianDistance(test_X[i], self.train_X[j]))
+                # dist.append(eucDist(test_X[i], self.train_X[j]))
+            # print(dist)
             NN_index = np.argmin(dist)
-            print(NN_index)
-            print(self.train_y[NN_index])
+            if test_y[i] != train_y[NN_index]:
+                # fail_predictions.append([test_X[i], train_X[NN_index], test_y[i], train_y[NN_index]])
+                fail_predictions.append([test_X[i], train_X[NN_index]])
+            else:
+                # success_predictions.append([test_X[i], train_X[NN_index], test_y[i], train_y[NN_index]])
+                success_predictions.append([test_X[i], train_X[NN_index]])
+            # print(NN_index)
+            # print(self.train_y[NN_index])
             predictions.append(self.train_y[NN_index])
-        return predictions
+        return predictions, success_predictions, fail_predictions
 
 # k = 3 #K nearest neighbours
-chunkSize = 60000
+chunkSize = 10000
+testSize = 100
 model = NN()
 model.fit(train_X[:chunkSize], train_y[:chunkSize])
-print('train labels:', train_y[:15])
+print('train labels:', test_y[:100])
 # model.fit(train_X[:10], train_y[:10])
 # print(model.predict(test_X[:100]))
-predictions = model.predictNN(test_X[:100])
-print(predictions)
+predictions, success_predictions, fail_predictions = model.predictNN(test_X[:testSize])
+# print(test_X[0][16][18])
 
 def getConfusionMatrix(predictions):
     confusion_matrix = np.zeros((10,10))
@@ -116,7 +130,7 @@ def getConfusionMatrixNormalized(predictions):
             confusion_matrix[test_y[i], x] += 1
     return confusion_matrix/np.amax(confusion_matrix)
 
-def plot(confusion_matrix):
+def plotConfusionMatrix(confusion_matrix):
     dia_sum = 0
     for i in range(len(confusion_matrix)):
         dia_sum += confusion_matrix[i, i]
@@ -124,16 +138,36 @@ def plot(confusion_matrix):
     class_names = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
     df_cm = pd.DataFrame(confusion_matrix, index = [i for i in class_names], columns = [i for i in class_names])
     plt.figure(figsize = (10,7))
-    seaborn.heatmap(df_cm, annot=True, cmap="YlGnBu")
+    seaborn.heatmap(df_cm, annot=True, cmap="YlGnBu", fmt='g')
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    plt.title(f'Confusion matrix - Chunksize: {chunkSize}\n error rate = {100 * error:.1f}%')
-    plt.savefig(f'./figures/Confusion_matrix_{chunkSize}chunk_normalized.png', dpi=200)
+    plt.title(f'Confusion matrix for MNIST task\n Training size: {chunkSize}, Test size: {testSize} \n Error rate = {100 * error:.1f}% \n ')
+    plt.savefig(f'./figures/Confusion_matrix_NN_c{chunkSize}_t{testSize}_e{100*error:.0f}_raw.png', dpi=200)
     plt.show()
 
-plot(getConfusionMatrix(predictions))
+# plotConfusionMatrix(getConfusionMatrix(predictions))
+def plotFailPredictions(fail_predictions):
+    # for i in range(9):
+    for i in range(3):
+        plt.subplot(330 + 1 + i)
+        plt.imshow(fail_predictions[i][0], cmap=plt.get_cmap('gray'))
+        plt.subplot(330 + 1 + 1 + i)
+        plt.imshow(fail_predictions[i][1], cmap=plt.get_cmap('gray'))
+        plt.subplot(330 + 1 + 2 + i)
+        plt.imshow(differenceImage(fail_predictions[i][0], fail_predictions[i][1]), cmap=plt.get_cmap('gray'))
+    plt.show()
 
+# def plotSuccessPredictions(success_predictions):
+#     for i in range(3):
+#         plt.subplot(330 + 1 + i)
+#         plt.imshow(test_X[i], cmap=plt.get_cmap('gray'))
+#         plt.subplot(330 + 1 + 1 + i)
+#         plt.imshow(train_X[i], cmap=plt.get_cmap('gray'))
+#         plt.subplot(330 + 1 + 2 + i)
+#         plt.imshow(differenceImage(test_X[i], train_X[i]), cmap=plt.get_cmap('gray'))
+#     plt.show()
 
+plotFailPredictions(fail_predictions)
 # print(model.predict(test_X))
     # Load the data
     # Initialize the value of k
@@ -172,4 +206,4 @@ plot(getConfusionMatrix(predictions))
 end = time.time()
 
 # total time taken
-print(f"Runtime of the program is {end - start} s.")
+print(f"Runtime of the program is {(end - start)/60} minutes.")
