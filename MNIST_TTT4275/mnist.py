@@ -2,16 +2,13 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io
-from scipy.spatial import distance
 from keras.datasets import mnist
-import random
 import operator
-from operator import itemgetter
 import seaborn
 import time
-from scipy.spatial import distance
+from sklearn.cluster import KMeans
 
-start = time.time()
+
 
 #Loading the MNIST dataset from keras
 (train_X, train_y), (test_X, test_y) = mnist.load_data()
@@ -20,6 +17,18 @@ start = time.time()
 # print('Y_train: ' + str(train_y.shape))
 # print('X_test:  '  + str(test_X.shape))
 # print('Y_test:  '  + str(test_y.shape))
+
+#  -----------------------------------------------------
+# |                                                     |
+# |                     Clustering                      |
+# |                                                     |
+#  -----------------------------------------------------
+
+#Assuming we can use the function KMeans from the sklearn library as matlab-users are allowed to use the in-built kmeans function
+def sortData(train_X, train_y):
+    return 0
+def cluster(train_X, train_y, M):
+    return 0
 
 #  -----------------------------------------------------
 # |                                                     |
@@ -195,9 +204,19 @@ def runNN(trainingSize, testSize, plotConfusionMat, plotFailedPred, plotSuccessP
     # Get the most frequent class of these rows
     # Return the predicted class
 
-runNN(1000, 10,True, False, False)
-# end time
-end = time.time()
-
-# total time taken
-print(f"Runtime of the program is {(end - start)/60} minutes.")
+#  -----------------------------------------------------
+# |                                                     |
+# |                       Main                          |
+# |                                                     |
+#  -----------------------------------------------------
+def main():
+    global train_X, train_y, test_X, test_y
+    start = time.time()
+    runNN(60000, 1,True, False, False)
+    # end time
+    end = time.time()
+    # total time taken
+    print(f"Runtime of the program is {(end - start)/60} minutes.")
+    return
+if __name__=='__main__':
+    main()
