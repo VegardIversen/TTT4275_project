@@ -21,45 +21,6 @@ print('Y_train: ' + str(train_y.shape))
 print('X_test:  '  + str(test_X.shape))
 print('Y_test:  '  + str(test_y.shape))
 
-# print(train_X[0])
-
-# def chunkifySet(chunkSize):
-#     #function: getTrainingSubset(subsetLength)
-#     #parameter 1: Size of the subset M 
-#     #return: [parameter 1] random elements from total set N 
-#     global train_X
-#     global train_y
-#     return np.split(train_X, chunkSize), np.split(train_y, chunkSize)
-
-# t = getTrainingSubset(10)
-def differenceImage(img1, img2):
-    a = img1-img2
-    b = np.uint8(img1<img2) * 254 + 1
-    return a * b
-
-def eucledianDistance(img1, img2):
-    return np.sum(differenceImage(img1, img2))
-
-def eucDist(x1, x2):
-    return np.linalg.norm(x1 - x2)
-
-# def KNN(test_X, train_X, train_y, k):
-#     dist = np.array([eucDist(test_X, x_t) for x_t in train_X])
-#     sortedDist = dist.argsort()[:k]
-#     print(sortedDist)
-#     classCount = {}
-#     for j in sortedDist:
-#         if train_y[j] in classCount:
-#             classCount[train_y[j]] += 1
-#         else: classCount[train_y[j]] = 1
-#     return classCount
-
-# for i in range(10):
-#     print(KNN(test_X[i], train_X[:1000], train_y, 10))
-
-
-# print(test_y[:10])
-
 class NN():
     def __init__(self, K=3):
         self.K = K
@@ -109,16 +70,30 @@ class NN():
         return predictions, success_predictions, fail_predictions
 
 # k = 3 #K nearest neighbours
-chunkSize = 10000
-testSize = 100
-model = NN()
-model.fit(train_X[:chunkSize], train_y[:chunkSize])
-print('train labels:', test_y[:100])
-# model.fit(train_X[:10], train_y[:10])
-# print(model.predict(test_X[:100]))
-predictions, success_predictions, fail_predictions = model.predictNN(test_X[:testSize])
-# print(test_X[0][16][18])
+def runNN(trainingSize, testSize, plotConfusionMat, plotFailedPred, plotSuccessPred):
+    model = NN()
+    model.fit(train_X[:trainingSize], train_y[:trainingSize])
+    predictions, success_predictions, fail_predictions = model.predictNN(test_X[:testSize])
+    if plotConfusionMat:
+        plotConfusionMatrix(getConfusionMatrix(predictions), testSize, trainingSize)
+    if plotFailedPred:
+        plotFailedPredictions(fail_predictions)
+    if plotSuccessPred:
+        plotSuccessPredictions(success_predictions)
 
+# chunkSize = 60000
+# testSize = 500
+# model = NN()
+# model.fit(train_X[:chunkSize], train_y[:chunkSize])
+# predictions, success_predictions, fail_predictions = model.predictNN(test_X[:testSize])
+def differenceImage(img1, img2):
+    a = img1-img2
+    b = np.uint8(img1<img2) * 254 + 1
+    return a * b
+def eucledianDistance(img1, img2):
+    return np.sum(differenceImage(img1, img2))
+def eucDist(x1, x2):
+    return np.linalg.norm(x1 - x2)
 def getConfusionMatrix(predictions):
     confusion_matrix = np.zeros((10,10))
     for i, x in enumerate(predictions):
@@ -129,8 +104,7 @@ def getConfusionMatrixNormalized(predictions):
     for i, x in enumerate(predictions):
             confusion_matrix[test_y[i], x] += 1
     return confusion_matrix/np.amax(confusion_matrix)
-
-def plotConfusionMatrix(confusion_matrix):
+def plotConfusionMatrix(confusion_matrix, testSize, trainingSize):
     dia_sum = 0
     for i in range(len(confusion_matrix)):
         dia_sum += confusion_matrix[i, i]
@@ -141,34 +115,59 @@ def plotConfusionMatrix(confusion_matrix):
     seaborn.heatmap(df_cm, annot=True, cmap="YlGnBu", fmt='g')
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    plt.title(f'Confusion matrix for MNIST task\n Training size: {chunkSize}, Test size: {testSize} \n Error rate = {100 * error:.1f}% \n ')
-    plt.savefig(f'./figures/Confusion_matrix_NN_c{chunkSize}_t{testSize}_e{100*error:.0f}_raw.png', dpi=200)
+    plt.title(f'Confusion matrix for MNIST task\n Training size: {trainingSize}, Test size: {testSize} \n Error rate = {100 * error:.1f}% \n ')
+    plt.savefig(f'./figures/Confusion_matrix_NN_c{trainingSize}_t{testSize}_e{100*error:.0f}_raw.png', dpi=200)
     plt.show()
-
-# plotConfusionMatrix(getConfusionMatrix(predictions))
 def plotFailPredictions(fail_predictions):
     # for i in range(9):
-    for i in range(3):
-        plt.subplot(330 + 1 + i)
-        plt.imshow(fail_predictions[i][0], cmap=plt.get_cmap('gray'))
-        plt.subplot(330 + 1 + 1 + i)
-        plt.imshow(fail_predictions[i][1], cmap=plt.get_cmap('gray'))
-        plt.subplot(330 + 1 + 2 + i)
-        plt.imshow(differenceImage(fail_predictions[i][0], fail_predictions[i][1]), cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 )
+    plt.title('Test')
+    plt.imshow(fail_predictions[0][0], cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 + 1 )
+    plt.title('Predicted')
+    plt.imshow(fail_predictions[0][1], cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 + 2 )
+    plt.title('Difference')
+    plt.imshow(differenceImage(fail_predictions[0][0], fail_predictions[0][1]), cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 + 3)
+    plt.imshow(fail_predictions[1][0], cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 + 4)
+    plt.imshow(fail_predictions[1][1], cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 + 5)
+    plt.imshow(differenceImage(fail_predictions[1][0], fail_predictions[1][1]), cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 + 6)
+    plt.imshow(fail_predictions[2][0], cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 + 7)
+    plt.imshow(fail_predictions[2][1], cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 + 8)
+    plt.imshow(differenceImage(fail_predictions[2][0], fail_predictions[2][1]), cmap=plt.get_cmap('gray'))
+    plt.savefig(f'./figures/failed_predictions.png', dpi=200)
+    plt.show()
+def plotSuccessPredictions(success_predictions):
+    plt.subplot(330 + 1 )
+    plt.title('Test')
+    plt.imshow(success_predictions[0][0], cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 + 1 )
+    plt.title('Predicted')
+    plt.imshow(success_predictions[0][1], cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 + 2 )
+    plt.title('Difference')
+    plt.imshow(differenceImage(success_predictions[0][0], success_predictions[0][1]), cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 + 3)
+    plt.imshow(success_predictions[1][0], cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 + 4)
+    plt.imshow(success_predictions[1][1], cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 + 5)
+    plt.imshow(differenceImage(success_predictions[1][0], success_predictions[1][1]), cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 + 6)
+    plt.imshow(success_predictions[2][0], cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 + 7)
+    plt.imshow(success_predictions[2][1], cmap=plt.get_cmap('gray'))
+    plt.subplot(330 + 1 + 8)
+    plt.imshow(differenceImage(success_predictions[2][0], success_predictions[2][1]), cmap=plt.get_cmap('gray'))
+    plt.savefig(f'./figures/success_predictions.png', dpi=200)
     plt.show()
 
-# def plotSuccessPredictions(success_predictions):
-#     for i in range(3):
-#         plt.subplot(330 + 1 + i)
-#         plt.imshow(test_X[i], cmap=plt.get_cmap('gray'))
-#         plt.subplot(330 + 1 + 1 + i)
-#         plt.imshow(train_X[i], cmap=plt.get_cmap('gray'))
-#         plt.subplot(330 + 1 + 2 + i)
-#         plt.imshow(differenceImage(test_X[i], train_X[i]), cmap=plt.get_cmap('gray'))
-#     plt.show()
-
-plotFailPredictions(fail_predictions)
-# print(model.predict(test_X))
     # Load the data
     # Initialize the value of k
     # To getting the predicted class, iterate from 1 to the total number of training data points
@@ -178,30 +177,7 @@ plotFailPredictions(fail_predictions)
     # Get the most frequent class of these rows
     # Return the predicted class
 
-#Cool way of looping
-# for i in range(9):
-#     print(train_y[i])
-
-# #---------------V---PLOT---V---------------
-# for i in range(9):  
-#     plt.subplot(330 + 1 + i)
-#     plt.imshow(train_X[i], cmap=plt.get_cmap('gray'))
-# plt.show()
-
-# for i in range(9):
-#      plt.subplot(330 + 1 + i)
-#      plt.imshow(test_X[i], cmap=plt.get_cmap('gray'))
-# plt.show()
-# for i in range(9):  
-#      plt.subplot(330 + 1 + i)
-#      plt.imshow(train_X[i], cmap=plt.get_cmap('gray'))
-# plt.show()
-# for i in range(9):  
-#      plt.subplot(330 + 1 + i)
-#      plt.imshow(train_X[i+9], cmap=plt.get_cmap('gray'))
-# plt.show()
-#------------^PLOT^---------------
-
+runNN(1000, 10,True, False, False)
 # end time
 end = time.time()
 
