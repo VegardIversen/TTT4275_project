@@ -16,11 +16,16 @@ start = time.time()
 #Loading the MNIST dataset from keras
 (train_X, train_y), (test_X, test_y) = mnist.load_data()
 
-print('X_train: ' + str(train_X.shape))
-print('Y_train: ' + str(train_y.shape))
-print('X_test:  '  + str(test_X.shape))
-print('Y_test:  '  + str(test_y.shape))
+# print('X_train: ' + str(train_X.shape))
+# print('Y_train: ' + str(train_y.shape))
+# print('X_test:  '  + str(test_X.shape))
+# print('Y_test:  '  + str(test_y.shape))
 
+#  -----------------------------------------------------
+# |                                                     |
+# |              NN and KNN implementation              |
+# |                                                     |
+#  -----------------------------------------------------
 class NN():
     def __init__(self, K=3):
         self.K = K
@@ -69,31 +74,11 @@ class NN():
             predictions.append(self.train_y[NN_index])
         return predictions, success_predictions, fail_predictions
 
-# k = 3 #K nearest neighbours
-def runNN(trainingSize, testSize, plotConfusionMat, plotFailedPred, plotSuccessPred):
-    model = NN()
-    model.fit(train_X[:trainingSize], train_y[:trainingSize])
-    predictions, success_predictions, fail_predictions = model.predictNN(test_X[:testSize])
-    if plotConfusionMat:
-        plotConfusionMatrix(getConfusionMatrix(predictions), testSize, trainingSize)
-    if plotFailedPred:
-        plotFailedPredictions(fail_predictions)
-    if plotSuccessPred:
-        plotSuccessPredictions(success_predictions)
-
-# chunkSize = 60000
-# testSize = 500
-# model = NN()
-# model.fit(train_X[:chunkSize], train_y[:chunkSize])
-# predictions, success_predictions, fail_predictions = model.predictNN(test_X[:testSize])
-def differenceImage(img1, img2):
-    a = img1-img2
-    b = np.uint8(img1<img2) * 254 + 1
-    return a * b
-def eucledianDistance(img1, img2):
-    return np.sum(differenceImage(img1, img2))
-def eucDist(x1, x2):
-    return np.linalg.norm(x1 - x2)
+#  -----------------------------------------------------
+# |                                                     |
+# |                  Plot functions                     |
+# |                                                     |
+#  -----------------------------------------------------
 def getConfusionMatrix(predictions):
     confusion_matrix = np.zeros((10,10))
     for i, x in enumerate(predictions):
@@ -167,6 +152,39 @@ def plotSuccessPredictions(success_predictions):
     plt.imshow(differenceImage(success_predictions[2][0], success_predictions[2][1]), cmap=plt.get_cmap('gray'))
     plt.savefig(f'./figures/success_predictions.png', dpi=200)
     plt.show()
+
+#  -----------------------------------------------------
+# |                                                     |
+# |                Distance functions                   |
+# |                                                     |
+#  -----------------------------------------------------
+def differenceImage(img1, img2):
+    a = img1-img2
+    b = np.uint8(img1<img2) * 254 + 1
+    return a * b
+def eucledianDistance(img1, img2):
+    return np.sum(differenceImage(img1, img2))
+def eucDist(x1, x2):
+    return np.linalg.norm(x1 - x2)
+
+#  -----------------------------------------------------
+# |                                                     |
+# |                     Run code                        |
+# |                                                     |
+#  -----------------------------------------------------
+def runNN(trainingSize, testSize, plotConfusionMat, plotFailedPred, plotSuccessPred):
+    model = NN()
+    model.fit(train_X[:trainingSize], train_y[:trainingSize])
+    predictions, success_predictions, fail_predictions = model.predictNN(test_X[:testSize])
+    if plotConfusionMat:
+        plotConfusionMatrix(getConfusionMatrix(predictions), testSize, trainingSize)
+    if plotFailedPred:
+        plotFailedPredictions(fail_predictions)
+    if plotSuccessPred:
+        plotSuccessPredictions(success_predictions)
+
+
+    
 
     # Load the data
     # Initialize the value of k
