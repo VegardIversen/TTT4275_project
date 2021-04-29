@@ -65,6 +65,9 @@ class LDC:
     def get_train_test(self):
         return self.train, self.test
 
+    def get_weigths(self):
+        print(self.weigths)
+        return self.weigths
 
     def get_tk(self):
         return self.t_k
@@ -259,10 +262,10 @@ def filter_dataset(data,features):
 classes = 3
 iris_names = ['Iris-setosa', 'Iris-versicolor', 'Iris-virginica']
 #features = ['sepal_length','sepal_width','petal_length','petal_width']
-path = 'iris.csv'
-path_setosa = 'class_1.csv'
-path_versicolour = 'class_2.csv'
-path_virginica = 'class_3.csv'
+path = 'Iris_TTT4275/iris.csv'
+path_setosa = 'Iris_TTT4275/class_1.csv'
+path_versicolour = 'Iris_TTT4275/class_2.csv'
+path_virginica = 'Iris_TTT4275/class_3.csv'
 
 #----------------get data--------------------#
 tot_data = load_data(path, normalize=False)
@@ -271,8 +274,8 @@ setosa = load_data(path_setosa,max_val)
 versicolor = load_data(path_versicolour, max_val)
 virginica = load_data(path_virginica, max_val)
 #---------------^get data^-------------------#
-alphas = [1,0.1,0.01,0.001,0.0001,0.00001]
-#alphas = [0.01]
+#alphas = [1,0.1,0.01,0.001,0.0001,0.00001]
+alphas = [0.01]
 def task1a(s=False):
     train_size = 30
     arr= []
@@ -296,6 +299,7 @@ def task1a(s=False):
         model = f'w{i}'
         model = LDC(train,test,t_k,2000,alphas[i], features)
         model.train_model()
+        model.get_weigths()
         arr.append(model.mses)
         model.test_model()
         model.print_confusion_matrix()
@@ -332,6 +336,7 @@ def task1d(s=False):
         model = f'wl{i}'
         model = LDC(train,test,t_k,2000,alphas[i], features)
         model.train_model()
+        model.get_weigths()
         arr.append(model.mses)
         model.test_model()
         model.print_confusion_matrix()
@@ -374,6 +379,7 @@ def task2a(s=False):
         model = f'w2{i}'
         model = LDC(train,test,t_k,2000,alphas[i], features)
         model.train_model()
+        model.get_weigths()
         arr.append(model.mses)
         model.test_model()
         model.print_confusion_matrix()
