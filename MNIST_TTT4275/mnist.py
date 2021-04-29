@@ -191,7 +191,7 @@ def plotConfusionMatrix(confusion_matrix, testSize, trainingSize, text):
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
     plt.title(f'Confusion matrix for MNIST task\n Training size: {trainingSize}, Test size: {testSize} \n Error rate = {100 * error:.1f}% \n ')
-    plt.savefig(f'./figures/Confusion_matrix_{text}_c{trainingSize}_t{testSize}_e{100*error:.0f}_raw.png', dpi=200)
+    #plt.savefig(f'./figures/Confusion_matrix_{text}_c{trainingSize}_t{testSize}_e{100*error:.0f}_raw.png', dpi=200)
     plt.show()
 def plotFailedPredictions(fail_predictions, text):
     # for i in range(9):
@@ -216,7 +216,7 @@ def plotFailedPredictions(fail_predictions, text):
     plt.imshow(fail_predictions[2][1], cmap=plt.get_cmap('gray'))
     plt.subplot(330 + 1 + 8)
     plt.imshow(differenceImage(fail_predictions[2][0], fail_predictions[2][1]), cmap=plt.get_cmap('gray'))
-    plt.savefig(f'./figures/{text}_failed_predictions.png', dpi=200)
+    #plt.savefig(f'./figures/{text}_failed_predictions.png', dpi=200)
     plt.show()
 def plotSuccessPredictions(success_predictions, text):
     plt.subplot(330 + 1 )
@@ -240,7 +240,7 @@ def plotSuccessPredictions(success_predictions, text):
     plt.imshow(success_predictions[2][1], cmap=plt.get_cmap('gray'))
     plt.subplot(330 + 1 + 8)
     plt.imshow(differenceImage(success_predictions[2][0], success_predictions[2][1]), cmap=plt.get_cmap('gray'))
-    plt.savefig(f'./figures/{text}_success_predictions.png', dpi=200)
+    #plt.savefig(f'./figures/{text}_success_predictions.png', dpi=200)
     plt.show()
 
 #  -----------------------------------------------------
@@ -287,13 +287,13 @@ def runCNN(trainingSize, testSize, M, plotConfusionMat, plotFailedPred, plotSucc
 def runCKNN(trainingSize, testSize, M, plotConfusionMat, plotFailedPred, plotSuccessPred):
     model = NN()
     model.fit(train_X[:trainingSize], train_y[:trainingSize])
-    predictions, success_predictions, fail_predictions = model.predictCKNN(test_X[:testSize], M)
+    predictions = model.predictCKNN(test_X[:testSize], M)
     if plotConfusionMat:
         plotConfusionMatrix(getConfusionMatrix(predictions), testSize, trainingSize, 'CKNN')
-    if plotFailedPred:
-        plotFailedPredictions(fail_predictions, 'CKNN')
-    if plotSuccessPred:
-        plotSuccessPredictions(success_predictions, 'CKNN')
+    # if plotFailedPred:
+    #     plotFailedPredictions(fail_predictions, 'CKNN')
+    # if plotSuccessPred:
+    #     plotSuccessPredictions(success_predictions, 'CKNN')
 
     # Load the data
     # Initialize the value of k

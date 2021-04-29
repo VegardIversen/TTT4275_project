@@ -1,4 +1,4 @@
-#from MNIST_TTT4275 import mnist as mn
+from MNIST_TTT4275 import mnist as mn
 from Iris_TTT4275 import iris_class as ic
 
 
@@ -60,7 +60,33 @@ def main():
                 action = 'iris'
             
         elif action == 'mnist':
-            pass
+            task = str(input('Which task do you want to see? We have task Nearest Neighbor (NN), clustering Nearest Neighbor (CNN) and clustering K nearest neighbor (CKNN). \n just type <<NN>>, <<CNN>> or <<CKNN>>, not case sensitive.\n Your choice: ')).lower()
+            if task == 'q' or task == 'quit':
+                print('Quitting...')
+                print('Goodbye!')
+                run = False
+                #action = 'q'
+            elif task == 'cnn':
+                print('Running task CNN...')
+                mn.runCNN(60000, 10000, 64, True, True, True)
+                
+            elif task == 'nn':
+                safety = str(input('Are you sure you want to run this? This takes 2 hours to run. (y/n): ')).lower()
+                if safety == 'y':
+                    print('Running task NN...')
+                    mn.runNN(60000, 10000, True, True, True)
+                else:
+                    print('Smart! Going back to choosing task.')
+                    
+                
+            elif task == 'cknn':
+                print('Running task CKNN...')
+                mn.runCKNN(60000, 10000, 64, True, False, False)
+            else:
+                print('Wrong input')
+                action = 'mnist'
+
+            
 
         elif action == 'quit' or action == 'q':
             print('Quitting...')
