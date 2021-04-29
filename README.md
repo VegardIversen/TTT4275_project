@@ -48,7 +48,7 @@ By moving into the different folders, you could run the task individually. This 
 ## Authors
 
 * **Vegard Iversen** - [Vegard Iversen](https://github.com/VegardIversen)
-*  ** Christian Nguyen** - [Christian Nguyen](https://github.com/christng98)
+*  **Christian Nguyen** - [Christian Nguyen](https://github.com/christng98)
 
 ## Note
 A lot of this code is just many quick fixes. There is probably some bugs. 
