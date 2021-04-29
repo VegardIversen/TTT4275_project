@@ -52,4 +52,4 @@ By moving into the different folders, you could run the task individually. This 
 
 ## Note
 A lot of this code is just many quick fixes. There is probably some bugs. 
-Have also made it algorithms into classes just for fun and to learn how to use classes. 
+Have also made the algorithms into classes just for fun and to learn how to use classes. 
