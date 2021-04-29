@@ -50,6 +50,6 @@ By moving into the different folders, you could run the task individually. This 
 * **Vegard Iversen** - [Vegard Iversen](https://github.com/VegardIversen)
 *  ** Christian Nguyen** - [Christian Nguyen](https://github.com/christng98)
 
-##Note
+## Note
 A lot of this code is just many quick fixes. There is probably some bugs. 
 Have also made it algorithms into classes just for fun and to learn how to use classes. 
