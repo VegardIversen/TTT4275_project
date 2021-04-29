@@ -8,6 +8,8 @@ import seaborn as sn
 #then use w = d.train()
 #could use @dataclass to not use self
 class LDC:
+
+    #initilizing the variables for the class.
     def __init__(self, train, test, t_k, iterations, alpha, list_of_features):
         #attributes under
         self.train = train
@@ -24,7 +26,8 @@ class LDC:
         self.mses = np.zeros(self.iterations)
         self.confusion_matrix = np.zeros((self.classes,self.classes))
     
-        
+    #useful function to get and set variable, after class has been initilized. 
+    # -----------------------------------------#   
     def set_iterations(self, iterations):
         self.iterations = iterations
     
@@ -77,69 +80,81 @@ class LDC:
 
     def get_num_of_classes(self):
         return self.classes
-
+    
+     # -----------------------------------------#
+    #just needed for resetting the cm before i test the trainset
     def reset_confusion_matrix(self):
         print('Resetting confusion matrix...')
-        self.confusion_matrix = np.zeros((self.classes,self.classes)) 
+        self.confusion_matrix = np.zeros((self.classes,self.classes))
 
+     
+    #sigmoid function activation function, eq 3.20 in compendium
     def sigmoid(self, x):
 
         return np.array(1/(1+ np.exp(-x)))
-
+    #another sigmoid function, not used for now
     def sigmoid2(self, x, w):
         return 1/(1+np.exp(-np.matmul(w,x)))
-
+    #calculation the gradient_gk MSE, part of eq:3.21 compendium
     def grad_gk_mse_f(self, g_k, t_k):
         grad = np.multiply((g_k-t_k),g_k)
         return grad
-
+    #calculation the gradient_w x_k, part of eq:3.21 compendium
     def grad_W_zk_f(self, x):
         grad = x.reshape(1,self.features)
         return grad
-    
+    #calculation the gradient_W mse, eq:3.22 compendium
     def grad_W_MSE_f(self, g_k, grad_gk_mse, grad_W_zk):
         return np.matmul(np.multiply(grad_gk_mse,(1-g_k)),grad_W_zk)
-
+    #calculation MSE, eq:3.19
     def MSE_f(self, g_k,t_k):
         return 0.5*np.matmul((g_k-t_k).T,(g_k-t_k))
 
 
-
+    #training the model
     def train_model(self):
         print(f'Training model with {self.iterations} iterations and alpha={self.alpha}.') 
+        #setting some init variables.
         self.g_k[0] = 1
-        
+        #looping through every iterations
         for i in range(self.iterations):
+            #setting start values, and resetting these every iteration
             grad_W_MSE = 0
             MSE = 0
-            k = 0
+            k = 0 #this is just to know whats the target class is.
             
             for j, x in enumerate(self.train): #isnt really necessary to use enumerate, see if i should change
                 if j%30==0 and j!=0:
                     k += 1
+                #calculating g_k, eq:3.20 also figure 3.8/3
                 self.g_k = self.sigmoid(np.matmul(self.weigths,x.reshape(self.features,1)))
-
+                #addiing to the MSE, see function
                 MSE += self.MSE_f(self.g_k,self.t_k[k])
-
+                #calcultation this iteration of grad gk mse
                 grad_gk_mse = self.grad_gk_mse_f(self.g_k,self.t_k[k])
+                #calcultation this iteration of grad W zk
                 grad_W_zk = self.grad_W_zk_f(x)
-                
+                #calcultation this iteration of grad W MSE
                 grad_W_MSE += self.grad_W_MSE_f(self.g_k, grad_gk_mse, grad_W_zk)
-            
+            #adding the MSE to the list of mses to see the model converge
             self.mses[i] = MSE[0]
+            #updating the weigths
             self.weigths = self.weigths-self.alpha*grad_W_MSE
 
-            if(100*i /self.iterations) % 10 == 0: #printer bare til 90 bare 90%
+            #printing the progress
+            if(100*i /self.iterations) % 10 == 0: 
                 
                 print(f"\rProgress passed {100 * i / self.iterations}%", end='\n')
                 
         
         print(f"\rProgress passed {(i+1)/self.iterations *100}%", end='\n')
         print('Done')
+        #returning the weigths, this is not necesarry as the self does it automatically
         return self.weigths
 
+    #function for testing the model
     def test_model(self): #or call this def fit(), to be simular as other lib.
-        
+        #just checking for some wrong inputs
         if(np.all((self.weigths==0 ))):
             print('You need to train the model first')
             return False
@@ -157,13 +172,14 @@ class LDC:
 
             #self.confusion_matrix = np.zeros((self.classes,self.classes))
         print(f'Testing model with {self.iterations} iterations and alpha={self.alpha}.')
+        #making predictons by matmul weigths and rows in the test set, then adding the prediction and true label too confusion matrix
         for clas, test_set in enumerate(self.test):
             for row in test_set:
                 prediction = np.argmax(np.matmul(self.weigths,row))
                 self.confusion_matrix[clas,prediction] += 1
 
         return self.confusion_matrix
-
+    #just a function that prints the cm, could have done a nice print. also calculating error rate
     def print_confusion_matrix(self):
         print(self.confusion_matrix)
         dia_sum = 0
@@ -172,6 +188,7 @@ class LDC:
         error = 1 - dia_sum / np.sum(self.confusion_matrix)
         print(f'error rate = {100 * error:.1f}%')
 
+    #plotting the confusion matrix, not much to see here
     def plot_confusion_matrix(self, name='ok', save=False):
         dia_sum = 0
         for i in range(len(self.confusion_matrix)):
@@ -190,6 +207,7 @@ class LDC:
         plt.clf()
         plt.close()
     
+    #plotting the MSE, not used on less i just have one alpha
     def plot_MSE(self, save=False, log=False):
         plt.plot(self.mses)
         plt.title(f'MSE for Iris task\n iteration: {self.iterations}, alpha: {self.alpha}.')
@@ -202,7 +220,7 @@ class LDC:
             plt.savefig(f'mse_it{self.iterations}_alpha{self.alpha}.png',dpi=200)
         else:
             plt.show()
-
+#plotting many alphas and their mse, can see which works best
 def plot_mses_array(arr, alphas, name='ok', save=False):
     a = 0
     alpha = r'$ \alpha $'
@@ -229,7 +247,7 @@ def plot_mses_array(arr, alphas, name='ok', save=False):
 
     
 
-
+#loading the data to a pandas dataframe. Using pandas as it has a nice visulaztion and is easy to manipulate
 
 def load_data(path, one=True, maxVal=None, normalize=False, d=','): #change normalize to true to normalize the feature data
     data = pd.read_csv(path, sep=d) #reading csv file, and splitting with ","
@@ -250,15 +268,18 @@ def load_data(path, one=True, maxVal=None, normalize=False, d=','): #change norm
 
     return data
 
+#removing the feature from dataset, this can be a list
 def remove_feature_dataset(data, features):
     data = data.drop(columns=features)
     print(data.head())
     return data
 
+#this will filter out the dataframe, not used now but nice to have
 def filter_dataset(data,features):
     data = data.filter(items=features)
     return data
 
+#-------------global variables---------------#
 classes = 3
 iris_names = ['Iris-setosa', 'Iris-versicolor', 'Iris-virginica']
 #features = ['sepal_length','sepal_width','petal_length','petal_width']
@@ -266,16 +287,26 @@ path = 'Iris_TTT4275/iris.csv'
 path_setosa = 'Iris_TTT4275/class_1.csv'
 path_versicolour = 'Iris_TTT4275/class_2.csv'
 path_virginica = 'Iris_TTT4275/class_3.csv'
+#-------------global variables---------------#
+
+
+
 
 #----------------get data--------------------#
+
 tot_data = load_data(path, normalize=False)
 max_val = tot_data.max(numeric_only=True).max() #first max, gets max of every feature, second max gets max of the features
 setosa = load_data(path_setosa,max_val) 
 versicolor = load_data(path_versicolour, max_val)
 virginica = load_data(path_virginica, max_val)
+
 #---------------^get data^-------------------#
+
+#alphas, this could be a chosen by the user. 
 #alphas = [1,0.1,0.01,0.001,0.0001,0.00001]
 alphas = [0.01]
+
+#the tasks, hacky setup but ez copy paste every task. there is some waste with the loading of dataset, but it works
 def task1a(s=False):
     train_size = 30
     arr= []
@@ -315,7 +346,7 @@ def task1a(s=False):
     plot_mses_array(arr, alphas, name='test_1a', save=s)
 
 def task1d(s=False):
-    train_size = 30
+    train_size = 20
     arr = []
     features = ['sepal_length','sepal_width','petal_length','petal_width']
    
@@ -351,25 +382,25 @@ def task1d(s=False):
 
     plot_mses_array(arr, alphas, name='test_1d', save=s)
 
-    
+#changing the name of the train test was necesarry to make it work when running all script at once, since the global variable i had changed the set for the others. this is still a bad solution.  
 def task2a(s=False):
-    global setosa,versicolor,virginica
+    #global setosa,versicolor,virginica
     train_size = 30
     arr = []
     features = ['sepal_length','petal_length','petal_width']
     #removing the sepal width feature because it shows most overlap
     re_feature = ['sepal_width']
-    setosa = remove_feature_dataset(setosa,re_feature)
-    versicolor = remove_feature_dataset(versicolor,re_feature)
-    virginica = remove_feature_dataset(virginica,re_feature)
+    setosa1 = remove_feature_dataset(setosa,re_feature)
+    versicolor1 = remove_feature_dataset(versicolor,re_feature)
+    virginica1 = remove_feature_dataset(virginica,re_feature)
 
     #----------------prepros data--------------------#
     #split_data_array = [setosa,versicolor,virginica] #not necessary
 
     #splitting up in test and train sets
-    train = pd.concat([setosa[0:train_size],versicolor[0:train_size],virginica[0:train_size]])
-    train_for_test = np.array([setosa[0:train_size],versicolor[0:train_size],virginica[0:train_size]])
-    test = np.array([setosa[train_size:],versicolor[train_size:],virginica[train_size:]]) #could mb have done this for train to, 
+    train = pd.concat([setosa1[0:train_size],versicolor1[0:train_size],virginica1[0:train_size]])
+    train_for_test = np.array([setosa1[0:train_size],versicolor1[0:train_size],virginica1[0:train_size]])
+    test = np.array([setosa1[train_size:],versicolor1[train_size:],virginica1[train_size:]]) #could mb have done this for train to, 
     t_k = np.array([[[1],[0],[0]],[[0],[1],[0]],[[0],[0],[1]]]) #making array to check whats the true class is
     #just making dataframe to numpy array
     train = train.to_numpy()
@@ -397,23 +428,23 @@ def task2a(s=False):
 
 def task2b_1(s=False):
     #also removing sepal length since it also showed alot of overlap
-    global setosa,versicolor,virginica
+    #global setosa,versicolor,virginica
     train_size = 30
     arr = []
     features = ['petal_length','petal_width']
     #removing the sepal width feature because it shows most overlap
     re_feature = ['sepal_length','sepal_width']
-    setosa = remove_feature_dataset(setosa,re_feature)
-    versicolor = remove_feature_dataset(versicolor,re_feature)
-    virginica = remove_feature_dataset(virginica,re_feature)
+    setosa2 = remove_feature_dataset(setosa,re_feature)
+    versicolor2 = remove_feature_dataset(versicolor,re_feature)
+    virginica2 = remove_feature_dataset(virginica,re_feature)
 
     #----------------prepros data--------------------#
     #split_data_array = [setosa,versicolor,virginica] #not necessary
 
     #splitting up in test and train sets
-    train = pd.concat([setosa[0:train_size],versicolor[0:train_size],virginica[0:train_size]])
-    train_for_test = np.array([setosa[0:train_size],versicolor[0:train_size],virginica[0:train_size]])
-    test = np.array([setosa[train_size:],versicolor[train_size:],virginica[train_size:]]) #could mb have done this for train to, 
+    train = pd.concat([setosa2[0:train_size],versicolor2[0:train_size],virginica2[0:train_size]])
+    train_for_test = np.array([setosa2[0:train_size],versicolor2[0:train_size],virginica2[0:train_size]])
+    test = np.array([setosa2[train_size:],versicolor2[train_size:],virginica2[train_size:]]) #could mb have done this for train to, 
     t_k = np.array([[[1],[0],[0]],[[0],[1],[0]],[[0],[0],[1]]]) #making array to check whats the true class is
     #just making dataframe to numpy array
     train = train.to_numpy()
@@ -439,23 +470,23 @@ def task2b_1(s=False):
 
 def task2b_2(s=False):
     #also removing petal width
-    global setosa,versicolor,virginica
+    #global setosa,versicolor,virginica
     train_size = 30
     arr = []
     features = ['petal_length']
     #removing the sepal width feature because it shows most overlap
     re_feature = ['sepal_length','sepal_width','petal_width']
-    setosa = remove_feature_dataset(setosa,re_feature)
-    versicolor = remove_feature_dataset(versicolor,re_feature)
-    virginica = remove_feature_dataset(virginica,re_feature)
+    setosa3 = remove_feature_dataset(setosa,re_feature)
+    versicolor3 = remove_feature_dataset(versicolor,re_feature)
+    virginica3 = remove_feature_dataset(virginica,re_feature)
 
     #----------------prepros data--------------------#
     #split_data_array = [setosa,versicolor,virginica] #not necessary
 
     #splitting up in test and train sets
-    train = pd.concat([setosa[0:train_size],versicolor[0:train_size],virginica[0:train_size]])
-    train_for_test = np.array([setosa[0:train_size],versicolor[0:train_size],virginica[0:train_size]])
-    test = np.array([setosa[train_size:],versicolor[train_size:],virginica[train_size:]]) #could mb have done this for train to, 
+    train = pd.concat([setosa3[0:train_size],versicolor3[0:train_size],virginica3[0:train_size]])
+    train_for_test = np.array([setosa3[0:train_size],versicolor3[0:train_size],virginica3[0:train_size]])
+    test = np.array([setosa3[train_size:],versicolor3[train_size:],virginica3[train_size:]]) #could mb have done this for train to, 
     t_k = np.array([[[1],[0],[0]],[[0],[1],[0]],[[0],[0],[1]]]) #making array to check whats the true class is
     #just making dataframe to numpy array
     train = train.to_numpy()
@@ -481,23 +512,24 @@ def task2b_2(s=False):
 
 def task2b_2_1(s=False):
     #Testing with removing petal length
-    global setosa,versicolor,virginica
+    #global setosa,versicolor,virginica, not nice solution
+
     train_size = 30
     arr = []
     features = ['petal_width']
     #removing the sepal width feature because it shows most overlap
     re_feature = ['sepal_length','sepal_width','petal_length']
-    setosa = remove_feature_dataset(setosa,re_feature)
-    versicolor = remove_feature_dataset(versicolor,re_feature)
-    virginica = remove_feature_dataset(virginica,re_feature)
+    setosa4 = remove_feature_dataset(setosa,re_feature)
+    versicolor4 = remove_feature_dataset(versicolor,re_feature)
+    virginica4 = remove_feature_dataset(virginica,re_feature)
 
     #----------------prepros data--------------------#
     #split_data_array = [setosa,versicolor,virginica] #not necessary
 
     #splitting up in test and train sets
-    train = pd.concat([setosa[0:train_size],versicolor[0:train_size],virginica[0:train_size]])
-    train_for_test = np.array([setosa[0:train_size],versicolor[0:train_size],virginica[0:train_size]])
-    test = np.array([setosa[train_size:],versicolor[train_size:],virginica[train_size:]]) #could mb have done this for train to, 
+    train = pd.concat([setosa4[0:train_size],versicolor4[0:train_size],virginica4[0:train_size]])
+    train_for_test = np.array([setosa4[0:train_size],versicolor4[0:train_size],virginica4[0:train_size]])
+    test = np.array([setosa4[train_size:],versicolor4[train_size:],virginica4[train_size:]]) #could mb have done this for train to, 
     t_k = np.array([[[1],[0],[0]],[[0],[1],[0]],[[0],[0],[1]]]) #making array to check whats the true class is
     #just making dataframe to numpy array
     train = train.to_numpy()
@@ -521,11 +553,16 @@ def task2b_2_1(s=False):
 
     plot_mses_array(arr, alphas, name='test_2b2_1', save=s)
 
+#runs if this program is ran in the terminal, py/python iris_classes.py. ofc need to uncomment the task, can use argument s=True to save the images with good quality
 if __name__ == '__main__':
-    #task1a()
-    #task1d()
-    #task2a()
-    #task2b_1()
-    #task2b_2()
-    #task2b_2_1()
+    path = 'iris.csv'
+    path_setosa = 'class_1.csv'
+    path_versicolour = 'class_2.csv'
+    path_virginica = 'class_3.csv'
+    # task1a()
+    # task1d()
+    # task2a()
+    # task2b_1()
+    # task2b_2()
+    # task2b_2_1()
     pass
