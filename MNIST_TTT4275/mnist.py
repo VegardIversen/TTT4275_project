@@ -96,7 +96,7 @@ class NN():
         clusters = cluster(self.train_X, self.train_y, M)
         clusterTimeEnd = time.time()
         print(f"Runtime of the clustering is: {str(datetime.timedelta(seconds = (time.time() - start)))}.")
-         reshapedTestX = test_X.flatten().reshape((len(test_X), 784))
+        reshapedTestX = test_X.flatten().reshape((len(test_X), 784))
         start = time.time()
 
         for i in range(len(test_X)):            #Iterate through length of test_X and add the predicted class to predictions.
@@ -203,7 +203,7 @@ def plotConfusionMatrix(confusion_matrix, testSize, trainingSize, text):
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
     plt.title(f'Confusion matrix for MNIST task\n Training size: {trainingSize}, Test size: {testSize} \n Error rate = {100 * error:.1f}% \n ')
-    plt.savefig(f'./figures/Confusion_matrix_{text}_c{trainingSize}_t{testSize}_e{100*error:.0f}_raw.png', dpi=200)
+    #plt.savefig(f'./figures/Confusion_matrix_{text}_c{trainingSize}_t{testSize}_e{100*error:.0f}_raw.png', dpi=200)
     plt.show()
 def plotFailedPredictions(fail_predictions, text):
     # for i in range(9):
@@ -228,7 +228,7 @@ def plotFailedPredictions(fail_predictions, text):
     plt.imshow(fail_predictions[2][1], cmap=plt.get_cmap('gray'))
     plt.subplot(330 + 1 + 8)
     plt.imshow(differenceImage(fail_predictions[2][0], fail_predictions[2][1]), cmap=plt.get_cmap('gray'))
-    plt.savefig(f'./figures/{text}_failed_predictions.png', dpi=200)
+    #plt.savefig(f'./figures/{text}_failed_predictions.png', dpi=200)
     plt.show()
 def plotSuccessPredictions(success_predictions, text):
     plt.subplot(330 + 1 )
@@ -252,7 +252,7 @@ def plotSuccessPredictions(success_predictions, text):
     plt.imshow(success_predictions[2][1], cmap=plt.get_cmap('gray'))
     plt.subplot(330 + 1 + 8)
     plt.imshow(differenceImage(success_predictions[2][0], success_predictions[2][1]), cmap=plt.get_cmap('gray'))
-    plt.savefig(f'./figures/{text}_success_predictions.png', dpi=200)
+    #plt.savefig(f'./figures/{text}_success_predictions.png', dpi=200)
     plt.show()
 
 #  -----------------------------------------------------
@@ -307,9 +307,9 @@ def runCNN(trainingSize, testSize, M, plotConfusionMat, plotFailedPred, plotSucc
         plotSuccessPredictions(success_predictions, 'CNN')
 
 def runCKNN(trainingSize, testSize, M, plotConfusionMat, plotFailedPred, plotSuccessPred):
-    model = NN()
+    model = NN(K=9)
     model.fit(train_X[:trainingSize], train_y[:trainingSize])
-    predictions, success_predictions, fail_predictions = model.predictCKNN(test_X[:testSize], M)
+    predictions = model.predictCKNN(test_X[:testSize], M)
     if plotConfusionMat:
         plotConfusionMatrix(getConfusionMatrix(predictions), testSize, trainingSize, 'CKNN')
     if plotFailedPred:
@@ -334,7 +334,7 @@ def runCKNN(trainingSize, testSize, M, plotConfusionMat, plotFailedPred, plotSuc
 def main():
     # runNN(60000, 10000, True, False, False)           #Takes 2 hours, best performance
     # runCNN(60000, 10000, 64, True, True, True)        #Takes 2-3 minutes, next best performance
-    # runCKNN(60000, 10000, 64, True, False, False)     #Takes 2-3 minutes, worst performance
+    runCKNN(60000, 10000, 64, True, False, False)     #Takes 2-3 minutes, worst performance
     return
 if __name__=='__main__':
     main()
