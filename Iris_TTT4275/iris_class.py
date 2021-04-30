@@ -11,20 +11,32 @@ class LDC:
 
     #initilizing the variables for the class.
     def __init__(self, train, test, t_k, iterations, alpha, list_of_features):
+        '''
+        function init: initilize the variables used in the class.
+        param self: necessarry to object. Makes it so you can access all the variables in __init__ in the other functions
+        param train: training data.
+        param test: test data.
+        param t_k: list with the true labels.
+        param iterations: choice of number of iterations.
+        param alpha: list of chosen alphas.
+        param list_of_features: list of the used features.
+
+
+        '''
         #attributes under
-        self.train = train
-        self.test = test
-        self.t_k = t_k
-        self.iterations = iterations
-        self.alpha = alpha
-        self.list_of_features = list_of_features
+        self.train = train #np.array
+        self.test = test #np.array
+        self.t_k = t_k #list or np.array doesnt matter
+        self.iterations = iterations #int
+        self.alpha = alpha #list or np.array doesnt matter
+        self.list_of_features = list_of_features #list or np.array doesnt matter
         self.class_names = ['Iris-setosa', 'Iris-versicolor', 'Iris-virginica'] #could have this as an input to generlize class
-        self.features = len(self.list_of_features) +1
+        self.features = len(self.list_of_features) +1 #int
         self.classes = 3 #could have this as an input but didnt bother, shouldnt change
-        self.weigths = np.zeros((self.classes,self.features))
-        self.g_k = np.zeros(self.classes)
-        self.mses = np.zeros(self.iterations)
-        self.confusion_matrix = np.zeros((self.classes,self.classes))
+        self.weigths = np.zeros((self.classes,self.features)) #setting up weigths matrix
+        self.g_k = np.zeros(self.classes) #setting up g_k array
+        self.mses = np.zeros(self.iterations) #setting up array to be filled with mses
+        self.confusion_matrix = np.zeros((self.classes,self.classes))#setting up confusion matrix basic
     
     #useful function to get and set variable, after class has been initilized. 
     # -----------------------------------------#   
@@ -90,6 +102,11 @@ class LDC:
      
     #sigmoid function activation function, eq 3.20 in compendium
     def sigmoid(self, x):
+        '''
+        function sigmoid: Implementation of sigmoid function.
+        param self: makes it so you can access all the variables in __init__.
+        param x: np.array of the instance.
+        '''
 
         return np.array(1/(1+ np.exp(-x)))
     #another sigmoid function, not used for now
@@ -97,17 +114,37 @@ class LDC:
         return 1/(1+np.exp(-np.matmul(w,x)))
     #calculation the gradient_gk MSE, part of eq:3.21 compendium
     def grad_gk_mse_f(self, g_k, t_k):
+        '''
+        function grad_gk_mse_f: implementation of eq:3.21 compendium.
+        param g_k: discirminant array.
+        param t_k: true label, ex: [0,1,0] for class 2.
+        '''
         grad = np.multiply((g_k-t_k),g_k)
         return grad
-    #calculation the gradient_w x_k, part of eq:3.21 compendium
+    #calculation the gradient_w z_k, part of eq:3.21 compendium
     def grad_W_zk_f(self, x):
+        '''
+        function grad_W_zk_f: #calculation the gradient_w z_k, part of eq:3.21 compendium. Same as transposing one dim array
+        param x: features.
+        '''
         grad = x.reshape(1,self.features)
         return grad
     #calculation the gradient_W mse, eq:3.22 compendium
     def grad_W_MSE_f(self, g_k, grad_gk_mse, grad_W_zk):
+        '''
+        function grad_W_MSE_f: calculation the gradient_W mse, eq:3.22 compendium.
+        param g_k: discriminant array.
+        param grad_gk_mse: gradient of g_kMSE.
+        param grad_W_zk: gradient for Wz_k.
+        '''
         return np.matmul(np.multiply(grad_gk_mse,(1-g_k)),grad_W_zk)
     #calculation MSE, eq:3.19
     def MSE_f(self, g_k,t_k):
+        '''
+        function MSE_f: calculation of the MSE eq:3.19
+        param g_k: discriminant array.
+        param t_k: true label, ex: [0,1,0] for class 2.
+        '''
         return 0.5*np.matmul((g_k-t_k).T,(g_k-t_k))
 
 
@@ -346,8 +383,8 @@ def task1a(s=False):
     plot_mses_array(arr, alphas, name='test_1a', save=s)
 
 def task1d(s=False):
-    train_size = 20
-    arr = []
+    train_size = 20 #still a training size of length 30, but to get the 30 last i use 20 here
+    arr = [] #
     features = ['sepal_length','sepal_width','petal_length','petal_width']
    
     #----------------prepros data--------------------#

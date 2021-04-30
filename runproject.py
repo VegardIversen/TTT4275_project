@@ -10,6 +10,7 @@ def main():
     #with the new python is it possible to make this a switch case or as it is called in python match case, didnt have the version that supported this
     #could make it so that you dont need to type iris or mnist every time, but thats a possible improvement for later.
     run = True
+    #just while loop that lets the user decide which task he/her want to run.
     while run:
         action = str(input('What task do you want to check out?\n For the Iris task type <<Iris>> and for the MNIST task type <<MNIST>> or quit by typing <<quit>> or <<q>> at anytime (its is not case sensitive).\n your choice: ')).lower()
         if action == 'iris':
