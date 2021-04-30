@@ -23,111 +23,132 @@ import datetime
 # |                     Clustering                      |
 # |                                                     |
 #  -----------------------------------------------------
-
-#Assuming we can use the function KMeans from the sklearn library as matlab-users are allowed to use the in-built kmeans function
+"""
+:function sortData: Sorting the MNIST images after each class from 0 to 9 and keeping track of how many of each.
+:param train_X: Training images.
+:param train_y: Labels of the training images.
+:return sortedTrainX: The sorted array of images from 0 to 9.
+:return numbCount: List of how many images of each class.
+"""
 def sortData(train_X, train_y):
-    #Sorting data to each class, preparing for clustering
-
-    numbCount = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-    #Number count, keeps track of how many of each label y. 
-    for i in range(len(train_y)):
+    numbCount = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]      #Keeps track of how many of each label.
+ 
+    for i in range(len(train_y)):                   #Iterates through whole length of train_y to find how many images of each class.
         numbCount[train_y[i]] += 1
 
-    sortedTrainY = np.argsort(train_y)  #sort after index
-    sortedTrainX = np.empty_like(train_X)
+    sortedTrainY = np.argsort(train_y)              #Sort after index  .
+    sortedTrainX = np.empty_like(train_X)           #Empty array with same shape as train_X for sorted array of train_X.
 
-    for i in range(len(train_y)):
+    for i in range(len(train_y)):                   #Adds all of train_X in a sorted manner, based on label. 
         sortedTrainX[i] = train_X[sortedTrainY[i]]
     return sortedTrainX, numbCount
+
+"""
+:function cluster:      Clustering the training images with a total of 640 clusters, 64 for each class.
+:param train_X:         Training images.
+:param train_y:         Labels of the training images.
+:param M:               Number of clusters in each class.
+:return clusters:       Array of clusters (images) in ascending order from 0 to 9. 
+"""
 def cluster(train_X, train_y, M):
-    #Flattening the 28x28 image as well
-    clusterStart = time.time()
-    sortedTrainX, numbCount = sortData(train_X, train_y)
-    flattenedSortedTrainX = sortedTrainX.flatten().reshape(60000, 784)
-    clusters = np.empty((len(numbCount), M, 784))
+    clusterStart = time.time()            
+    sortedTrainX, numbCount = sortData(train_X, train_y)                    #Retrieving the sorted array of images and the list of how many images of each class.
+    flattenedSortedTrainX = sortedTrainX.flatten().reshape(60000, 784)      #Reshaping sortedTrainX to desired format
+    clusters = np.empty((len(numbCount), M, 784))                           #Making an empty array of desired size
     before = 0
     after = 0
-    for count, i in enumerate(numbCount):
-        after += i
-        clustered = KMeans(n_clusters=M, random_state=0).fit(flattenedSortedTrainX[before:after]).cluster_centers_
-        before = after
-        clusters[count] = clustered
+
+    for count, i in enumerate(numbCount):                                   #Making 64 clusters, classwise. 
+        after += i                                                          #Splice tracking.
+        clustered = KMeans(n_clusters=M, random_state=0).fit(flattenedSortedTrainX[before:after]).cluster_centers_  #Get the 64 clusters.
+        before = after                                                      #Splice tracking.
+        clusters[count] = clustered                                         #Add to cluster array.
         print(count)
+
     clusterEnd = time.time()
-    #Returning a reshaped clustering
-    return clusters.flatten().reshape(len(numbCount)*64, 784)
+    return clusters.flatten().reshape(len(numbCount)*64, 784)               #Reshaped cluster for distance measuring.
 
 #  -----------------------------------------------------
 # |                                                     |
 # |              NN and KNN implementation              |
 # |                                                     |
 #  -----------------------------------------------------
+"""
+:class NN: Nearest Neighbour class. Alle the NN and KNN implementations are done here.
+"""
 class NN():
     def __init__(self, K=7):
         self.K = K
     def fit(self, train_X, train_y):
         self.train_X = train_X
         self.train_y = train_y
+    """
+    :function predictCKNN:  Implementation of KNN algorithm with clustering.
+    :param self:            Internal variables.
+    :param test_X:          Test images.
+    :param M:               Number of clusters in each class.
+    :return predictions:    List of predicted/classified labels.
+    """
     def predictCKNN(self, test_X, M):
         predictions = []
-        fail_predictions = []
-        success_predictions = []
         index = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         start = time.time()
         clusters = cluster(self.train_X, self.train_y, M)
         clusterTimeEnd = time.time()
         print(f"Runtime of the clustering is: {str(datetime.timedelta(seconds = (time.time() - start)))}.")
-        # for i in range(9):
-        #     plt.subplot(330 + 1 + i)
-        #     plt.imshow(clusters[510+i], cmap=plt.get_cmap('gray'))
-        # plt.plot()
-        # print('shape of clusters: ', np.shape(clusters))
-        # print('range of cluster: ', len(clusters[0]))
-        
-        reshapedTestX = test_X.flatten().reshape((len(test_X), 784))
-        # print('shape of reshapedTestX: ', np.shape(reshapedTestX))
+         reshapedTestX = test_X.flatten().reshape((len(test_X), 784))
         start = time.time()
-        for i in range(len(test_X)):
-            dist = []
-            for count in range(len(clusters)):
-                dist.append(distance.euclidean(reshapedTestX[i], clusters[count]))
-            # print(dist)
-            sortedDist = np.argsort(dist)[:self.K]
 
+        for i in range(len(test_X)):            #Iterate through length of test_X and add the predicted class to predictions.
+            dist = []
+
+            for count in range(len(clusters)):  #Iterate through each class and find the K cluster images with the least distance from test image.
+                dist.append(distance.euclidean(reshapedTestX[i], clusters[count]))
+
+            sortedDist = np.argsort(dist)[:self.K]
             classCount = {}
-            for j in sortedDist:
+
+            for j in sortedDist:                #Iterate through the K cluster images and find the class with the majority.
                 number = index[int(j//64)]
-                #If the class is mentioned, +1
                 if number in classCount:
                     classCount[number] += 1
                 else: classCount[number] = 1
-            # print(classCount)
+
             predictions.append(max(classCount, key=classCount.get))
         print(f"Runtime of the KNN with clustering is: {str(datetime.timedelta(seconds = (time.time() - start)))}.")
         return predictions
+    """
+    :function predictNN:            Implementation of NN algorithm without clustering.
+    :param self:                    Internal variables.
+    :param test_X:                  Test images.
+    :return predictions:            List of predicted/classified labels.
+    :return success_predictions:    Array of images successfully classified.
+    :return fail_predictions:       Array of images unsuccessfully classified.
+    """
     def predictNN(self, test_X):
         predictions = []
         fail_predictions = []
         success_predictions = []
-        for i in range(len(test_X)):
-            #Iterate through every train_X and find the euclidian distance between test_X and train_X and put it in a np.array
+        for i in range(len(test_X)):                    #Iterate through length of test_X and add the predicted class to predictions.
             dist = []
-            for j in range(len(self.train_X)):
+            for j in range(len(self.train_X)):          #Iterate through length of training set and find training image with the least distance from test image.
                 dist.append(eucledianDistance(test_X[i], self.train_X[j]))
-                # dist.append(eucDist(test_X[i], self.train_X[j]))
-            # print(dist)
-            NN_index = np.argmin(dist)
+            NN_index = np.argmin(dist)                  #Get the index of that training image.
             if test_y[i] != train_y[NN_index]:
-                # fail_predictions.append([test_X[i], train_X[NN_index], test_y[i], train_y[NN_index]])
                 fail_predictions.append([test_X[i], train_X[NN_index]])
             else:
-                # success_predictions.append([test_X[i], train_X[NN_index], test_y[i], train_y[NN_index]])
                 success_predictions.append([test_X[i], train_X[NN_index]])
-            # print(NN_index)
-            # print(self.train_y[NN_index])
-            predictions.append(self.train_y[NN_index])
+            predictions.append(self.train_y[NN_index])  #Add the training image label to predictions.
         return predictions, success_predictions, fail_predictions
+    """
+    :function predictCNN:           Implementation of NN algorithm clustering.
+    :param self:                    Internal variables.
+    :param test_X:                  Test images.
+    :param M:                       Number of clusters in each class.
+    :return predictions:            List of predicted/classified labels.
+    :return success_predictions:    Array of images successfully classified.
+    :return fail_predictions:       Array of images unsuccessfully classified.
+    """
     def predictCNN(self, test_X, M):
         predictions = []
         fail_predictions = []
@@ -137,28 +158,19 @@ class NN():
         clusters = cluster(self.train_X, self.train_y, M)
         clusterTimeEnd = time.time()
         print(f"Runtime of the clustering is: {str(datetime.timedelta(seconds = (time.time() - start)))}.")
-        # for i in range(9):
-        #     plt.subplot(330 + 1 + i)
-        #     plt.imshow(clusters[510+i], cmap=plt.get_cmap('gray'))
-        # plt.plot()
-        print('shape of clusters: ', np.shape(clusters))
-        print('range of cluster: ', len(clusters[0]))
-        
         reshapedTestX = test_X.flatten().reshape((len(test_X), 784))
-        print('shape of reshapedTestX: ', np.shape(reshapedTestX))
         start = time.time()
-        for i in range(len(test_X)):
+
+        for i in range(len(test_X)):                #Iterate through length of test_X and add the predicted class to predictions.
             dist = []
-            for count in range(len(clusters)):
+
+            for count in range(len(clusters)):      #Iterate through each class and find the cluster image with the least distance from test image.
                 dist.append(distance.euclidean(reshapedTestX[i], clusters[count]))
-            # print(dist)
-            NN_index = np.argmin(dist)
-            # print(NN_index)
+
+            NN_index = np.argmin(dist)              #Get the index of that training image.
             if test_y[i] != index[int(NN_index//64)]:
-                # fail_predictions.append([test_X[i], train_X[NN_index], test_y[i], train_y[NN_index]])
                 fail_predictions.append([test_X[i], clusters[NN_index].flatten().reshape((28, 28))])
             else:
-                # success_predictions.append([test_X[i], train_X[NN_index], test_y[i], train_y[NN_index]])
                 success_predictions.append([test_X[i], clusters[NN_index].flatten().reshape((28, 28))])
             predictions.append(index[int(NN_index//64)])
         print(f"Runtime of the NN with clustering is: {str(datetime.timedelta(seconds = (time.time() - start)))}.")
@@ -191,7 +203,7 @@ def plotConfusionMatrix(confusion_matrix, testSize, trainingSize, text):
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
     plt.title(f'Confusion matrix for MNIST task\n Training size: {trainingSize}, Test size: {testSize} \n Error rate = {100 * error:.1f}% \n ')
-    #plt.savefig(f'./figures/Confusion_matrix_{text}_c{trainingSize}_t{testSize}_e{100*error:.0f}_raw.png', dpi=200)
+    plt.savefig(f'./figures/Confusion_matrix_{text}_c{trainingSize}_t{testSize}_e{100*error:.0f}_raw.png', dpi=200)
     plt.show()
 def plotFailedPredictions(fail_predictions, text):
     # for i in range(9):
@@ -216,7 +228,7 @@ def plotFailedPredictions(fail_predictions, text):
     plt.imshow(fail_predictions[2][1], cmap=plt.get_cmap('gray'))
     plt.subplot(330 + 1 + 8)
     plt.imshow(differenceImage(fail_predictions[2][0], fail_predictions[2][1]), cmap=plt.get_cmap('gray'))
-    #plt.savefig(f'./figures/{text}_failed_predictions.png', dpi=200)
+    plt.savefig(f'./figures/{text}_failed_predictions.png', dpi=200)
     plt.show()
 def plotSuccessPredictions(success_predictions, text):
     plt.subplot(330 + 1 )
@@ -240,7 +252,7 @@ def plotSuccessPredictions(success_predictions, text):
     plt.imshow(success_predictions[2][1], cmap=plt.get_cmap('gray'))
     plt.subplot(330 + 1 + 8)
     plt.imshow(differenceImage(success_predictions[2][0], success_predictions[2][1]), cmap=plt.get_cmap('gray'))
-    #plt.savefig(f'./figures/{text}_success_predictions.png', dpi=200)
+    plt.savefig(f'./figures/{text}_success_predictions.png', dpi=200)
     plt.show()
 
 #  -----------------------------------------------------
@@ -248,14 +260,24 @@ def plotSuccessPredictions(success_predictions, text):
 # |                Distance functions                   |
 # |                                                     |
 #  -----------------------------------------------------
+"""
+    :function differenceImage:  Finding the difference between the two images.
+    :param img1:                Test image.
+    :param img2:                Training image.
+    :return a*b:                The difference between the images.
+"""
 def differenceImage(img1, img2):
     a = img1-img2
     b = np.uint8(img1<img2) * 254 + 1
     return a * b
+"""
+    :function eudcledianDistance:  Implementation of KNN algorithm with clustering.
+    :param img1:                   Test image.
+    :param img2:                   Training image.
+    :return ...:                   The Eucledian distance between the images.
+"""
 def eucledianDistance(img1, img2):
     return np.sum(differenceImage(img1, img2))
-def eucDist(x1, x2):
-    return np.linalg.norm(x1 - x2)
 
 #  -----------------------------------------------------
 # |                                                     |
@@ -287,13 +309,13 @@ def runCNN(trainingSize, testSize, M, plotConfusionMat, plotFailedPred, plotSucc
 def runCKNN(trainingSize, testSize, M, plotConfusionMat, plotFailedPred, plotSuccessPred):
     model = NN()
     model.fit(train_X[:trainingSize], train_y[:trainingSize])
-    predictions = model.predictCKNN(test_X[:testSize], M)
+    predictions, success_predictions, fail_predictions = model.predictCKNN(test_X[:testSize], M)
     if plotConfusionMat:
         plotConfusionMatrix(getConfusionMatrix(predictions), testSize, trainingSize, 'CKNN')
-    # if plotFailedPred:
-    #     plotFailedPredictions(fail_predictions, 'CKNN')
-    # if plotSuccessPred:
-    #     plotSuccessPredictions(success_predictions, 'CKNN')
+    if plotFailedPred:
+        plotFailedPredictions(fail_predictions, 'CKNN')
+    if plotSuccessPred:
+        plotSuccessPredictions(success_predictions, 'CKNN')
 
     # Load the data
     # Initialize the value of k
@@ -310,13 +332,9 @@ def runCKNN(trainingSize, testSize, M, plotConfusionMat, plotFailedPred, plotSuc
 # |                                                     |
 #  -----------------------------------------------------
 def main():
-    # runNN(10000, 10000,True, False, False)
-    # x, y = sortData(train_X, train_y)
-    # clust = cluster(train_X, train_y, 64)
-    # runNN(60000, 10000, True, False, False) #Takes 2 hours, best performance
-    runCNN(60000, 10000, 64, True, True, True) #Takes 2-3 minutes, next best performance
-    # runCKNN(60000, 10000, 64, True, False, False) #Takes 2-3 minutes, worst performance
-    # print(np.shape(clust))
+    # runNN(60000, 10000, True, False, False)           #Takes 2 hours, best performance
+    # runCNN(60000, 10000, 64, True, True, True)        #Takes 2-3 minutes, next best performance
+    # runCKNN(60000, 10000, 64, True, False, False)     #Takes 2-3 minutes, worst performance
     return
 if __name__=='__main__':
     main()
