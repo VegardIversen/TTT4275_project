@@ -1,7 +1,7 @@
 # TTT4275_project
 Project in Estimation, Detection and Classification at NTNU. Here we have done the classification project, with Iris flower and MNIST.
 The task done, can be found in the TTT4275_project folder as pdf.
-
+Project result: 50/50.
 ## Getting Started
 
 Clone the project to a folder of your choice. Remember to be in that folder when running the command
